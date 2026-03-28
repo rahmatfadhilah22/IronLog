@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
 import { createId, nowIsoTimestamp } from "../../core/utils";
-import type { Exercise } from "../../types/exercise";
+import type { CreateCustomExercisePayload, Exercise } from "../../types/exercise";
 import type {
   ExerciseFilterResult,
   ExerciseQuery,
@@ -43,10 +43,15 @@ type ExerciseRow = {
   muscle_group: string;
   equipment_type: string;
   is_favorite: 0 | 1;
+  is_custom: 0 | 1;
 };
 
 type MuscleGroupRow = {
   muscle_group: string;
+};
+
+type EquipmentTypeRow = {
+  equipment_type: string;
 };
 
 export async function listRoutineSummaries(
@@ -199,7 +204,7 @@ export async function getExerciseById(
   exerciseId: string,
 ): Promise<Exercise | null> {
   const row = await db.getFirstAsync<ExerciseRow>(
-    `SELECT id, name, muscle_group, equipment_type, is_favorite
+    `SELECT id, name, muscle_group, equipment_type, is_favorite, is_custom
     FROM exercises
     WHERE id = ?`,
     exerciseId,
@@ -210,6 +215,49 @@ export async function getExerciseById(
   }
 
   return mapExerciseRow(row);
+}
+
+export async function createCustomExercise(
+  db: SQLiteDatabase,
+  payload: CreateCustomExercisePayload,
+): Promise<Exercise> {
+  const duplicate = await db.getFirstAsync<ExerciseRow>(
+    `SELECT id, name, muscle_group, equipment_type, is_favorite, is_custom
+    FROM exercises
+    WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))
+    LIMIT 1`,
+    payload.name,
+  );
+
+  if (duplicate) {
+    throw new Error("Exercise dengan nama yang sama sudah ada.");
+  }
+
+  const exerciseId = createId();
+
+  await db.runAsync(
+    `INSERT INTO exercises (
+      id,
+      name,
+      muscle_group,
+      equipment_type,
+      is_favorite,
+      is_custom
+    ) VALUES (?, ?, ?, ?, 0, 1)`,
+    exerciseId,
+    payload.name,
+    payload.muscleGroup,
+    payload.equipmentType,
+  );
+
+  return {
+    id: exerciseId,
+    name: payload.name,
+    muscleGroup: payload.muscleGroup,
+    equipmentType: payload.equipmentType,
+    isFavorite: false,
+    isCustom: true,
+  };
 }
 
 export async function listExercisesForPicker(
@@ -246,10 +294,11 @@ export async function listExercisesForPicker(
       name,
       muscle_group,
       equipment_type,
-      is_favorite
+      is_favorite,
+      is_custom
     FROM exercises
     ${whereSql}
-    ORDER BY name ASC
+    ORDER BY is_custom DESC, name ASC
     LIMIT ?`,
     ...params,
     limit,
@@ -261,9 +310,16 @@ export async function listExercisesForPicker(
     ORDER BY muscle_group ASC`,
   );
 
+  const equipmentTypeRows = await db.getAllAsync<EquipmentTypeRow>(
+    `SELECT DISTINCT equipment_type
+    FROM exercises
+    ORDER BY equipment_type ASC`,
+  );
+
   return {
     exercises: exerciseRows.map(mapExerciseRow),
     muscleGroups: muscleGroupRows.map((row) => row.muscle_group),
+    equipmentTypes: equipmentTypeRows.map((row) => row.equipment_type),
   };
 }
 
@@ -303,5 +359,6 @@ function mapExerciseRow(row: ExerciseRow): Exercise {
     muscleGroup: row.muscle_group,
     equipmentType: row.equipment_type,
     isFavorite: row.is_favorite === 1,
+    isCustom: row.is_custom === 1,
   };
 }

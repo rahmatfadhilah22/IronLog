@@ -356,13 +356,21 @@ async function restoreExercises(
     }
 
     await db.runAsync(
-      `INSERT INTO exercises (id, name, muscle_group, equipment_type, is_favorite)
-      VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO exercises (
+        id,
+        name,
+        muscle_group,
+        equipment_type,
+        is_favorite,
+        is_custom
+      )
+      VALUES (?, ?, ?, ?, ?, ?)`,
       String(raw.id),
       String(raw.name ?? ""),
       String(raw.muscle_group ?? ""),
       String(raw.equipment_type ?? ""),
       Number(raw.is_favorite ?? 0),
+      Number(raw.is_custom ?? 0),
     );
   }
 }

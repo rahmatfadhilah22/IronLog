@@ -1,5 +1,6 @@
 import {
   archiveRoutine,
+  createCustomExercise,
   createRoutine,
   getExerciseById,
   getRoutineDetailById,
@@ -8,7 +9,7 @@ import {
   updateRoutine,
 } from "../../db/repositories";
 import { getDatabase } from "../../db/sqlite";
-import type { Exercise } from "../../types/exercise";
+import type { CreateCustomExercisePayload, Exercise } from "../../types/exercise";
 import type {
   ExerciseFilterResult,
   ExerciseQuery,
@@ -52,6 +53,11 @@ class RoutineService {
     const db = await getDatabase();
     return getExerciseById(db, exerciseId);
   }
+
+  async createCustomExercise(payload: CreateCustomExercisePayload): Promise<Exercise> {
+    const db = await getDatabase();
+    return createCustomExercise(db, sanitizeCustomExercisePayload(payload));
+  }
 }
 
 export const routineService = new RoutineService();
@@ -63,6 +69,20 @@ function sanitizePayload(payload: RoutineUpsertPayload): RoutineUpsertPayload {
     exercises: payload.exercises.map((exercise) => ({
       exerciseId: exercise.exerciseId,
       restTimeSeconds: Math.max(0, Math.floor(exercise.restTimeSeconds)),
-    })),
+      })),
   };
+}
+
+function sanitizeCustomExercisePayload(
+  payload: CreateCustomExercisePayload,
+): CreateCustomExercisePayload {
+  return {
+    name: collapseWhitespace(payload.name),
+    muscleGroup: collapseWhitespace(payload.muscleGroup),
+    equipmentType: collapseWhitespace(payload.equipmentType),
+  };
+}
+
+function collapseWhitespace(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
 }

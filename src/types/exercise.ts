@@ -6,10 +6,17 @@ export type ExerciseSeed = {
   is_favorite: 0 | 1;
 };
 
+export type CreateCustomExercisePayload = {
+  name: string;
+  muscleGroup: string;
+  equipmentType: string;
+};
+
 export type Exercise = {
   id: string;
   name: string;
   muscleGroup: string;
   equipmentType: string;
   isFavorite: boolean;
+  isCustom: boolean;
 };

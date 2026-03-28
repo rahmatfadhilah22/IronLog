@@ -46,4 +46,5 @@ export type ExerciseQuery = {
 export type ExerciseFilterResult = {
   exercises: Exercise[];
   muscleGroups: string[];
+  equipmentTypes: string[];
 };

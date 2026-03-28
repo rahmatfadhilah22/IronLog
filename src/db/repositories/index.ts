@@ -16,6 +16,7 @@ export {
 export { seedExercisesIfEmpty } from "./exercise-repository";
 export {
   archiveRoutine,
+  createCustomExercise,
   createRoutine,
   getExerciseById,
   getRoutineDetailById,
