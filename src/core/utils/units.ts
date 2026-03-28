@@ -1,28 +1,47 @@
-import type { PreferredUnit } from "../../types/settings";
+import type { OneRmFormula, PreferredUnit } from "../../types/settings";
 
-const LB_TO_KG = 0.45359237;
-const KG_TO_LB = 2.2046226218;
+const KG_TO_LB_FACTOR = 2.2046226218;
 
 export function convertWeight(
-  value: number,
+  weight: number,
   fromUnit: PreferredUnit,
   toUnit: PreferredUnit,
 ): number {
-  if (!Number.isFinite(value)) {
+  if (!Number.isFinite(weight)) {
     return 0;
   }
 
   if (fromUnit === toUnit) {
-    return value;
+    return weight;
   }
 
-  return fromUnit === "kg" ? value * KG_TO_LB : value * LB_TO_KG;
+  if (fromUnit === "kg" && toUnit === "lb") {
+    return weight * KG_TO_LB_FACTOR;
+  }
+
+  return weight / KG_TO_LB_FACTOR;
 }
 
-export function convertVolume(
-  value: number,
-  fromUnit: PreferredUnit,
-  toUnit: PreferredUnit,
+export function estimateOneRm(
+  weight: number,
+  reps: number,
+  formula: OneRmFormula,
 ): number {
-  return convertWeight(value, fromUnit, toUnit);
+  if (!Number.isFinite(weight) || weight <= 0) {
+    return 0;
+  }
+
+  if (!Number.isFinite(reps) || reps <= 1) {
+    return weight;
+  }
+
+  if (formula === "epley") {
+    return weight * (1 + reps / 30);
+  }
+
+  if (reps >= 37) {
+    return weight;
+  }
+
+  return (weight * 36) / (37 - reps);
 }

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PrimaryButton } from "../../components";
 import { themeTokens } from "../../core/theme";
-import { convertVolume, createId } from "../../core/utils";
+import { convertWeight, createId } from "../../core/utils";
 import { appSettingsService } from "../../services/settings";
 import { workoutService } from "../../services/workouts";
 import { useExercisePickerStore } from "../../stores";
@@ -708,7 +708,7 @@ function formatWeight(value: number): string {
 
 function formatVolume(sets: WorkoutSet[], preferredUnit: PreferredUnit): string {
   const totalVolume = sets.reduce((sum, currentSet) => {
-    const convertedWeight = convertVolume(
+    const convertedWeight = convertWeight(
       currentSet.weight,
       currentSet.unit,
       preferredUnit,

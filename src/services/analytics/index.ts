@@ -1,1 +1,1 @@
-export {};
+export { analyticsService } from "./analytics-service";

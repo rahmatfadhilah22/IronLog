@@ -11,6 +11,7 @@ import {
   updateWorkoutSet,
 } from "../../db/repositories";
 import { appSettingsService } from "../settings/app-settings-service";
+import { analyticsService } from "../analytics";
 import { getDatabase } from "../../db/sqlite";
 import type {
   ActiveWorkoutReference,
@@ -66,6 +67,7 @@ class WorkoutService {
   async finishWorkout(workoutId: string): Promise<void> {
     const db = await getDatabase();
     await finishWorkout(db, workoutId);
+    await analyticsService.rebuildExerciseStats();
   }
 
   async getWorkoutSummary(workoutId: string): Promise<WorkoutSummary | null> {
