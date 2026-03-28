@@ -4,6 +4,7 @@ import {
   deleteWorkoutSet,
   finishWorkout,
   getActiveWorkout,
+  getLatestCompletedWorkout,
   getWorkoutDetailById,
   getWorkoutSummaryById,
   startWorkoutFromRoutine,
@@ -13,6 +14,7 @@ import { appSettingsService } from "../settings/app-settings-service";
 import { getDatabase } from "../../db/sqlite";
 import type {
   ActiveWorkoutReference,
+  CompletedWorkoutReference,
   StartWorkoutResult,
   WorkoutDetail,
   WorkoutSetInput,
@@ -24,6 +26,11 @@ class WorkoutService {
   async getActiveWorkout(): Promise<ActiveWorkoutReference | null> {
     const db = await getDatabase();
     return getActiveWorkout(db);
+  }
+
+  async getLatestCompletedWorkout(): Promise<CompletedWorkoutReference | null> {
+    const db = await getDatabase();
+    return getLatestCompletedWorkout(db);
   }
 
   async startWorkoutFromRoutine(routineId: string): Promise<StartWorkoutResult> {

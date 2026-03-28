@@ -4,6 +4,7 @@ import { createId, nowIsoTimestamp } from "../../core/utils";
 import type { PreferredUnit } from "../../types/settings";
 import type {
   ActiveWorkoutReference,
+  CompletedWorkoutReference,
   StartWorkoutResult,
   WorkoutDetail,
   WorkoutExerciseDetail,
@@ -156,6 +157,39 @@ export async function getActiveWorkout(
     routineId: row.routine_id,
     title: row.title_snapshot ?? row.routine_name ?? "Custom Workout",
     startedAt: row.started_at,
+  };
+}
+
+export async function getLatestCompletedWorkout(
+  db: SQLiteDatabase,
+): Promise<CompletedWorkoutReference | null> {
+  const row = await db.getFirstAsync<{
+    id: string;
+    title_snapshot: string | null;
+    routine_name: string | null;
+    finished_at: string | null;
+  }>(
+    `SELECT
+      workouts.id,
+      workouts.title_snapshot,
+      routines.name AS routine_name,
+      workouts.finished_at
+    FROM workouts
+    LEFT JOIN routines ON routines.id = workouts.routine_id
+    WHERE workouts.status = 'completed'
+      AND workouts.finished_at IS NOT NULL
+    ORDER BY workouts.finished_at DESC
+    LIMIT 1`,
+  );
+
+  if (!row?.finished_at) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    title: row.title_snapshot ?? row.routine_name ?? "Custom Workout",
+    finishedAt: row.finished_at,
   };
 }
 

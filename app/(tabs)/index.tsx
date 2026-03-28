@@ -1,14 +1,24 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { EmptyState, PrimaryButton, RoutineCard } from "../../src/components";
 import { themeTokens } from "../../src/core/theme";
 import { routineService } from "../../src/services/routines";
 import { workoutService } from "../../src/services/workouts";
 import type { RoutineSummary } from "../../src/types/routine";
-import type { ActiveWorkoutReference } from "../../src/types/workout";
+import type {
+  ActiveWorkoutReference,
+  CompletedWorkoutReference,
+} from "../../src/types/workout";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -18,6 +28,8 @@ export default function HomeScreen() {
   const [activeWorkout, setActiveWorkout] = useState<ActiveWorkoutReference | null>(
     null,
   );
+  const [lastCompletedWorkout, setLastCompletedWorkout] =
+    useState<CompletedWorkoutReference | null>(null);
 
   const loadHomeData = useCallback(() => {
     let isActive = true;
@@ -28,9 +40,11 @@ export default function HomeScreen() {
       .listRoutines(3)
       .then(async (routines) => {
         const active = await workoutService.getActiveWorkout();
+        const latestCompleted = await workoutService.getLatestCompletedWorkout();
         if (isActive) {
           setRecentRoutines(routines);
           setActiveWorkout(active);
+          setLastCompletedWorkout(latestCompleted);
         }
       })
       .catch((requestError: unknown) => {
@@ -108,6 +122,38 @@ export default function HomeScreen() {
           }}
         />
       </View>
+
+      {lastCompletedWorkout ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Last Completed</Text>
+          <View style={styles.completedWorkoutPanel}>
+            <View style={styles.completedWorkoutInfo}>
+              <Text style={styles.completedWorkoutTitle}>
+                {lastCompletedWorkout.title.toUpperCase()}
+              </Text>
+              <Text style={styles.completedWorkoutMeta}>
+                FINISHED {new Date(lastCompletedWorkout.finishedAt).toLocaleString()}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                router.push(
+                  {
+                    pathname: "/workout/summary",
+                    params: { workoutId: lastCompletedWorkout.id },
+                  } as never,
+                );
+              }}
+              style={({ pressed }) => [
+                styles.secondaryActionButton,
+                pressed ? styles.secondaryActionButtonPressed : null,
+              ]}
+            >
+              <Text style={styles.secondaryActionLabel}>View Summary</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Routines</Text>
@@ -214,6 +260,29 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textTransform: "uppercase",
   },
+  completedWorkoutPanel: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
+  },
+  completedWorkoutInfo: {
+    gap: 2,
+  },
+  completedWorkoutTitle: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  completedWorkoutMeta: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
   section: {
     gap: themeTokens.spacing.sm,
   },
@@ -226,5 +295,23 @@ const styles = StyleSheet.create({
   },
   listWrap: {
     gap: themeTokens.spacing.sm,
+  },
+  secondaryActionButton: {
+    minHeight: 46,
+    borderRadius: themeTokens.radius.sm,
+    backgroundColor: themeTokens.colors.surfaceHighest,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: themeTokens.spacing.lg,
+  },
+  secondaryActionButtonPressed: {
+    opacity: 0.85,
+  },
+  secondaryActionLabel: {
+    color: themeTokens.colors.textPrimary,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    fontSize: 12,
   },
 });

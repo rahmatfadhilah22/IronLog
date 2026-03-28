@@ -50,6 +50,12 @@ export type ActiveWorkoutReference = {
   startedAt: string;
 };
 
+export type CompletedWorkoutReference = {
+  id: string;
+  title: string;
+  finishedAt: string;
+};
+
 export type StartWorkoutResult = {
   workoutId: string;
   reusedActiveWorkout: boolean;

@@ -15,6 +15,7 @@ export {
   deleteWorkoutSet,
   finishWorkout,
   getActiveWorkout,
+  getLatestCompletedWorkout,
   getWorkoutDetailById,
   getWorkoutSummaryById,
   startWorkoutFromRoutine,
