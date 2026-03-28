@@ -1,6 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,12 +16,15 @@ import { themeTokens } from "../../src/core/theme";
 import { analyticsService } from "../../src/services/analytics";
 import type { ExerciseProgressDetail, ProgressRange } from "../../src/types/progress";
 
+type SnapshotMetric = "weight" | "volume" | "oneRm";
+
 export default function ExerciseProgressScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ exerciseId?: string | string[] }>();
   const exerciseId = asFirstString(params.exerciseId);
   const [selectedRange, setSelectedRange] = useState<ProgressRange>("30d");
+  const [snapshotMetric, setSnapshotMetric] = useState<SnapshotMetric>("weight");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [detail, setDetail] = useState<ExerciseProgressDetail | null>(null);
@@ -107,7 +110,7 @@ export default function ExerciseProgressScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.headerSection}>
-        <Text style={styles.headerEyebrow}>Performance Deep Dive</Text>
+        <Text style={styles.headerEyebrow}>Exercise Progress</Text>
         <Text style={styles.headerTitle}>{detail.exerciseName.toUpperCase()}</Text>
         <Text style={styles.headerMeta}>
           {detail.muscleGroup.toUpperCase()} • {detail.equipmentType.toUpperCase()}
@@ -157,83 +160,227 @@ export default function ExerciseProgressScreen() {
           label="LAST PERFORMED"
           value={detail.lastPerformed ? formatDate(detail.lastPerformed) : "-"}
         />
-        <StatCard
-          label="1RM FORMULA"
-          value={detail.oneRmFormula.toUpperCase()}
-        />
       </View>
 
-      <TrendChartSection
-        title="Weight Trend"
-        subtitle={`TOP WEIGHT (${detail.preferredUnit.toUpperCase()})`}
-        points={detail.trend.map((item) => ({
-          value: item.topWeight,
-          label: shortDate(item.performedAt),
-          meta: `${formatMetric(item.topWeight)} ${detail.preferredUnit.toUpperCase()}`,
-        }))}
+      <TrendSnapshotSection
+        detail={detail}
+        selectedMetric={snapshotMetric}
+        onSelectMetric={setSnapshotMetric}
       />
 
-      <TrendChartSection
-        title="Volume Trend"
-        subtitle={`SESSION VOLUME (${detail.preferredUnit.toUpperCase()})`}
-        points={detail.trend.map((item) => ({
-          value: item.sessionVolume,
-          label: shortDate(item.performedAt),
-          meta: `${formatMetric(item.sessionVolume)} ${detail.preferredUnit.toUpperCase()}`,
-        }))}
-      />
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>How To Read This</Text>
+        <Text style={styles.infoText}>
+          Each row below represents one completed workout session for this exercise
+          within the selected range.
+        </Text>
+      </View>
+
+      <SessionHistorySection detail={detail} />
     </ScrollView>
   );
 }
 
-type TrendPointView = {
-  value: number;
-  label: string;
-  meta: string;
+type SessionHistorySectionProps = {
+  detail: ExerciseProgressDetail;
 };
 
-type TrendChartSectionProps = {
-  title: string;
-  subtitle: string;
-  points: TrendPointView[];
+type TrendSnapshotSectionProps = {
+  detail: ExerciseProgressDetail;
+  selectedMetric: SnapshotMetric;
+  onSelectMetric: (metric: SnapshotMetric) => void;
 };
 
-function TrendChartSection({ title, subtitle, points }: TrendChartSectionProps) {
+function TrendSnapshotSection({
+  detail,
+  selectedMetric,
+  onSelectMetric,
+}: TrendSnapshotSectionProps) {
+  const recentSessions = useMemo(() => detail.trend.slice(-6), [detail.trend]);
+
+  const points = useMemo(
+    () =>
+      recentSessions.map((session) => ({
+        workoutId: session.workoutId,
+        performedAt: session.performedAt,
+        value:
+          selectedMetric === "weight"
+            ? session.topWeight
+            : selectedMetric === "volume"
+              ? session.sessionVolume
+              : session.estimatedOneRm,
+      })),
+    [recentSessions, selectedMetric],
+  );
+
   if (points.length === 0) {
     return (
-      <View style={styles.chartSection}>
-        <Text style={styles.chartTitle}>{title}</Text>
-        <Text style={styles.chartSubtitle}>{subtitle}</Text>
-        <Text style={styles.chartEmpty}>Belum ada data pada range ini.</Text>
+      <View style={styles.snapshotSection}>
+        <Text style={styles.snapshotTitle}>Trend Snapshot</Text>
+        <Text style={styles.snapshotEmpty}>No visual trend available in this range.</Text>
       </View>
     );
   }
 
-  const recentPoints = points.slice(-12);
-  const maxValue = Math.max(...recentPoints.map((item) => item.value), 1);
+  const latestPoint = points[points.length - 1];
+  const previousPoint = points.length > 1 ? points[points.length - 2] : null;
+  const delta = previousPoint ? latestPoint.value - previousPoint.value : null;
+  const maxValue = Math.max(...points.map((point) => point.value), 1);
+  const metricLabel =
+    selectedMetric === "weight"
+      ? "Top Weight"
+      : selectedMetric === "volume"
+        ? "Session Volume"
+        : "Estimated 1RM";
+  const deltaLabel =
+    delta === null
+      ? "First tracked session in this range."
+      : delta === 0
+        ? "No change from the previous session."
+        : `${delta > 0 ? "+" : ""}${formatMetric(delta)} ${detail.preferredUnit.toUpperCase()} vs previous session`;
 
   return (
-    <View style={styles.chartSection}>
-      <Text style={styles.chartTitle}>{title}</Text>
-      <Text style={styles.chartSubtitle}>{subtitle}</Text>
-      <View style={styles.chartBars}>
-        {recentPoints.map((point, index) => (
-          <View key={`${point.label}-${index}`} style={styles.chartBarWrap}>
-            <View style={styles.chartBarTrack}>
+    <View style={styles.snapshotSection}>
+      <Text style={styles.snapshotTitle}>Trend Snapshot</Text>
+      <Text style={styles.snapshotSubtitle}>LAST 6 COMPLETED SESSIONS</Text>
+
+      <View style={styles.snapshotToggleRow}>
+        <SnapshotChip
+          label="Weight"
+          selected={selectedMetric === "weight"}
+          onPress={() => onSelectMetric("weight")}
+        />
+        <SnapshotChip
+          label="Volume"
+          selected={selectedMetric === "volume"}
+          onPress={() => onSelectMetric("volume")}
+        />
+        <SnapshotChip
+          label="1RM"
+          selected={selectedMetric === "oneRm"}
+          onPress={() => onSelectMetric("oneRm")}
+        />
+      </View>
+
+      <View style={styles.snapshotSummaryCard}>
+        <Text style={styles.snapshotSummaryLabel}>{metricLabel}</Text>
+        <Text style={styles.snapshotSummaryValue}>
+          {formatMetric(latestPoint.value)} {detail.preferredUnit.toUpperCase()}
+        </Text>
+        <Text
+          style={[
+            styles.snapshotSummaryDelta,
+            delta !== null && delta > 0 ? styles.snapshotSummaryDeltaPositive : null,
+            delta !== null && delta < 0 ? styles.snapshotSummaryDeltaNegative : null,
+          ]}
+        >
+          {deltaLabel}
+        </Text>
+      </View>
+
+      <View style={styles.snapshotBars}>
+        {points.map((point) => (
+          <View key={point.workoutId} style={styles.snapshotBarItem}>
+            <Text style={styles.snapshotBarValue}>{formatCompactMetric(point.value)}</Text>
+            <View style={styles.snapshotBarTrack}>
               <View
                 style={[
-                  styles.chartBarFill,
-                  { height: `${Math.max(8, (point.value / maxValue) * 100)}%` },
+                  styles.snapshotBarFill,
+                  {
+                    height: `${Math.max(10, (point.value / maxValue) * 100)}%`,
+                  },
                 ]}
               />
             </View>
-            <Text style={styles.chartLabel}>{point.label}</Text>
+            <Text style={styles.snapshotBarLabel}>{formatShortDateTime(point.performedAt)}</Text>
           </View>
         ))}
       </View>
-      <Text style={styles.chartMeta}>
-        Latest: {recentPoints[recentPoints.length - 1]?.meta ?? "-"}
+    </View>
+  );
+}
+
+type SnapshotChipProps = {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+};
+
+function SnapshotChip({ label, selected, onPress }: SnapshotChipProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.snapshotChip, selected ? styles.snapshotChipSelected : null]}
+    >
+      <Text
+        style={[
+          styles.snapshotChipLabel,
+          selected ? styles.snapshotChipLabelSelected : null,
+        ]}
+      >
+        {label}
       </Text>
+    </Pressable>
+  );
+}
+
+function SessionHistorySection({ detail }: SessionHistorySectionProps) {
+  if (detail.trend.length === 0) {
+    return (
+      <View style={styles.historySection}>
+        <Text style={styles.historyTitle}>Session History</Text>
+        <Text style={styles.historyEmpty}>No completed sessions in this range.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.historySection}>
+      <Text style={styles.historyTitle}>Session History</Text>
+      <Text style={styles.historySubtitle}>
+        TOP WEIGHT, SESSION VOLUME, ESTIMATED 1RM, AND SET COUNT
+      </Text>
+
+      <View style={styles.historyList}>
+        {[...detail.trend].reverse().map((session) => (
+          <View key={session.workoutId} style={styles.historyCard}>
+            <View style={styles.historyTopRow}>
+              <Text style={styles.historyDate}>{formatDate(session.performedAt)}</Text>
+              <Text style={styles.historySets}>{session.setCount} SETS</Text>
+            </View>
+
+            <View style={styles.historyMetricGrid}>
+              <MetricItem
+                label="TOP WEIGHT"
+                value={`${formatMetric(session.topWeight)} ${detail.preferredUnit.toUpperCase()}`}
+              />
+              <MetricItem
+                label="SESSION VOLUME"
+                value={`${formatMetric(session.sessionVolume)} ${detail.preferredUnit.toUpperCase()}`}
+              />
+              <MetricItem
+                label="EST. 1RM"
+                value={`${formatMetric(session.estimatedOneRm)} ${detail.preferredUnit.toUpperCase()}`}
+              />
+              <MetricItem label="FORMULA" value={detail.oneRmFormula.toUpperCase()} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+type MetricItemProps = {
+  label: string;
+  value: string;
+};
+
+function MetricItem({ label, value }: MetricItemProps) {
+  return (
+    <View style={styles.metricItem}>
+      <Text style={styles.metricItemLabel}>{label}</Text>
+      <Text style={styles.metricItemValue}>{value}</Text>
     </View>
   );
 }
@@ -271,13 +418,31 @@ function formatMetric(value: number): string {
   return value.toFixed(1);
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString();
+function formatCompactMetric(value: number): string {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}k`;
+  }
+
+  return formatMetric(value);
 }
 
-function shortDate(iso: string): string {
-  const date = new Date(iso);
-  return `${date.getMonth() + 1}/${date.getDate()}`;
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatShortDateTime(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 const styles = StyleSheet.create({
@@ -377,59 +542,209 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontWeight: "800",
   },
-  chartSection: {
+  snapshotSection: {
     backgroundColor: themeTokens.colors.surfaceLow,
     borderRadius: themeTokens.radius.sm,
     padding: themeTokens.spacing.md,
     gap: themeTokens.spacing.sm,
   },
-  chartTitle: {
+  snapshotTitle: {
     color: themeTokens.colors.textPrimary,
     fontSize: 18,
     fontWeight: "700",
     textTransform: "uppercase",
   },
-  chartSubtitle: {
+  snapshotSubtitle: {
     color: themeTokens.colors.textSecondary,
     fontSize: 10,
     letterSpacing: 0.8,
     fontWeight: "700",
     textTransform: "uppercase",
   },
-  chartBars: {
+  snapshotToggleRow: {
+    flexDirection: "row",
+    gap: themeTokens.spacing.xs,
+  },
+  snapshotChip: {
+    minHeight: 34,
+    minWidth: 72,
+    borderRadius: themeTokens.radius.sm,
+    backgroundColor: themeTokens.colors.surfaceHighest,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: themeTokens.spacing.sm,
+  },
+  snapshotChipSelected: {
+    backgroundColor: themeTokens.colors.accentPrimary,
+  },
+  snapshotChipLabel: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+  },
+  snapshotChipLabelSelected: {
+    color: themeTokens.colors.backgroundDeep,
+  },
+  snapshotSummaryCard: {
+    backgroundColor: themeTokens.colors.background,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: themeTokens.colors.surfaceHighest,
+  },
+  snapshotSummaryLabel: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  snapshotSummaryValue: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: "800",
+  },
+  snapshotSummaryDelta: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+  snapshotSummaryDeltaPositive: {
+    color: themeTokens.colors.accentPrimary,
+  },
+  snapshotSummaryDeltaNegative: {
+    color: "#FF8D7E",
+  },
+  snapshotBars: {
     flexDirection: "row",
     alignItems: "flex-end",
     gap: themeTokens.spacing.xs,
-    minHeight: 150,
+    minHeight: 170,
   },
-  chartBarWrap: {
+  snapshotBarItem: {
     flex: 1,
     alignItems: "center",
-    gap: 4,
+    gap: 6,
   },
-  chartBarTrack: {
+  snapshotBarValue: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  snapshotBarTrack: {
     width: "100%",
     height: 120,
     backgroundColor: themeTokens.colors.surfaceHigh,
+    borderRadius: themeTokens.radius.sm,
     justifyContent: "flex-end",
     overflow: "hidden",
-    borderRadius: themeTokens.radius.sm,
   },
-  chartBarFill: {
+  snapshotBarFill: {
     width: "100%",
     backgroundColor: themeTokens.colors.accentPrimary,
   },
-  chartLabel: {
+  snapshotBarLabel: {
     color: themeTokens.colors.textSecondary,
     fontSize: 9,
     fontWeight: "700",
+    textAlign: "center",
   },
-  chartMeta: {
+  infoCard: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
+  },
+  infoTitle: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  infoText: {
     color: themeTokens.colors.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 13,
+    lineHeight: 20,
   },
-  chartEmpty: {
+  historySection: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
+  },
+  historyTitle: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  historySubtitle: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  historyList: {
+    gap: themeTokens.spacing.sm,
+  },
+  historyCard: {
+    backgroundColor: themeTokens.colors.background,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
+    borderWidth: 1,
+    borderColor: themeTokens.colors.surfaceHighest,
+  },
+  historyTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: themeTokens.spacing.sm,
+  },
+  historyDate: {
+    flex: 1,
+    color: themeTokens.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  historySets: {
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+  },
+  historyMetricGrid: {
+    gap: themeTokens.spacing.xs,
+  },
+  historyEmpty: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+  },
+  metricItem: {
+    backgroundColor: themeTokens.colors.surfaceHigh,
+    borderRadius: themeTokens.radius.sm,
+    paddingHorizontal: themeTokens.spacing.sm,
+    paddingVertical: themeTokens.spacing.sm,
+    gap: 2,
+  },
+  metricItemLabel: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  metricItemValue: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  snapshotEmpty: {
     color: themeTokens.colors.textSecondary,
     fontSize: 13,
   },
