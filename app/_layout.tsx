@@ -58,6 +58,15 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="modal/rest-timer"
+          options={{
+            title: "Rest Timer",
+            presentation: "transparentModal",
+            headerShown: false,
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
       </Stack>
     </>
   );

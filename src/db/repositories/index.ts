@@ -9,3 +9,14 @@ export {
   listRoutineSummaries,
   updateRoutine,
 } from "./routine-repository";
+export {
+  addWorkoutExerciseBlock,
+  addWorkoutSet,
+  deleteWorkoutSet,
+  finishWorkout,
+  getActiveWorkout,
+  getWorkoutDetailById,
+  getWorkoutSummaryById,
+  startWorkoutFromRoutine,
+  updateWorkoutSet,
+} from "./workout-repository";

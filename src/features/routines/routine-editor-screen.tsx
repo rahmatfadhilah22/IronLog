@@ -15,6 +15,7 @@ import { PrimaryButton } from "../../components";
 import { themeTokens } from "../../core/theme";
 import { createId } from "../../core/utils";
 import { routineService } from "../../services/routines";
+import { workoutService } from "../../services/workouts";
 import { useExercisePickerStore } from "../../stores";
 import type { RoutineExerciseDraft } from "../../types/routine";
 
@@ -34,6 +35,7 @@ export function RoutineEditorScreen({
   const [exercises, setExercises] = useState<RoutineExerciseDraft[]>([]);
   const [isLoading, setIsLoading] = useState(mode === "edit");
   const [isSaving, setIsSaving] = useState(false);
+  const [isStartingWorkout, setIsStartingWorkout] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pickerRequestKey, setPickerRequestKey] = useState<string | null>(null);
@@ -234,6 +236,30 @@ export function RoutineEditorScreen({
     }
   };
 
+  const onStartWorkout = async () => {
+    if (mode !== "edit" || !routineId) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsStartingWorkout(true);
+
+    try {
+      const result = await workoutService.startWorkoutFromRoutine(routineId);
+      if (result.reusedActiveWorkout) {
+        setSuccessMessage("Workout aktif ditemukan. Melanjutkan sesi yang ada.");
+      }
+      router.push(`/workout/${result.workoutId}` as never);
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Gagal memulai workout.",
+      );
+    } finally {
+      setIsStartingWorkout(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centerState}>
@@ -260,6 +286,16 @@ export function RoutineEditorScreen({
         <Text style={styles.sectionTitle}>
           {mode === "create" ? "Create Routine" : "Routine Detail"}
         </Text>
+        {mode === "edit" ? (
+          <PrimaryButton
+            label={isStartingWorkout ? "Opening Workout..." : "Start Workout"}
+            onPress={() => {
+              void onStartWorkout();
+            }}
+            disabled={isStartingWorkout || isSaving}
+            style={styles.startWorkoutButton}
+          />
+        ) : null}
       </View>
 
       <View style={styles.section}>
@@ -549,5 +585,9 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: themeTokens.spacing.sm,
+  },
+  startWorkoutButton: {
+    marginTop: themeTokens.spacing.sm,
+    minHeight: 56,
   },
 });

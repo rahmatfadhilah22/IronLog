@@ -1,1 +1,1 @@
-export {};
+export { workoutService } from "./workout-service";
