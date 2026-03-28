@@ -16,6 +16,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.rahmat.ironlog",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -27,9 +29,20 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-sharing"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-sharing"
+    ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "88bc39c8-835e-4c32-8ebb-732044ea1773"
+      }
+    },
+    "owner": "rahmatcsh"
   }
 }
