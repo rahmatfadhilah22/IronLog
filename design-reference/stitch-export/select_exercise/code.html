@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IRONLOG - Exercise Picker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#8e9379",
+              "error-container": "#93000a",
+              "inverse-primary": "#506600",
+              "surface-variant": "#353534",
+              "surface-container": "#201f1f",
+              "on-tertiary-fixed-variant": "#454747",
+              "surface-bright": "#393939",
+              "tertiary-fixed-dim": "#c6c6c7",
+              "on-background": "#e5e2e1",
+              "surface-container-highest": "#353534",
+              "tertiary-fixed": "#e2e2e2",
+              "primary-fixed": "#c3f400",
+              "on-secondary-fixed": "#1a1b1f",
+              "secondary-fixed": "#e3e2e7",
+              "on-tertiary": "#2f3131",
+              "outline-variant": "#444933",
+              "surface-container-high": "#2a2a2a",
+              "tertiary-container": "#e2e2e2",
+              "on-error-container": "#ffdad6",
+              "surface": "#131313",
+              "on-secondary-container": "#b5b4ba",
+              "secondary-fixed-dim": "#c6c6cb",
+              "on-secondary": "#2f3034",
+              "on-primary-container": "#556d00",
+              "primary-container": "#c3f400",
+              "surface-dim": "#131313",
+              "on-secondary-fixed-variant": "#46464b",
+              "surface-container-low": "#1c1b1b",
+              "inverse-on-surface": "#313030",
+              "surface-container-lowest": "#0e0e0e",
+              "on-primary-fixed": "#161e00",
+              "inverse-surface": "#e5e2e1",
+              "secondary": "#c6c6cb",
+              "surface-tint": "#abd600",
+              "secondary-container": "#46464b",
+              "on-tertiary-fixed": "#1a1c1c",
+              "on-primary-fixed-variant": "#3c4d00",
+              "on-surface": "#e5e2e1",
+              "primary-fixed-dim": "#abd600",
+              "error": "#ffb4ab",
+              "on-surface-variant": "#c4c9ac",
+              "on-primary": "#283500",
+              "on-tertiary-container": "#636565",
+              "background": "#131313",
+              "primary": "#CCFF00",
+              "tertiary": "#ffffff",
+              "on-error": "#690005"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+        .kinetic-gradient {
+            background: linear-gradient(180deg, #CCFF00 0%, #ABD600 100%);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0E0E0E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #353534;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-6 py-4 bg-[#131313] border-none bg-[#0E0E0E] fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-[#CCFF00] hover:bg-[#353534] transition-colors p-2 rounded-lg active:scale-95 duration-100">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-[#CCFF00] text-2xl font-black tracking-widest font-['Space_Grotesk'] uppercase">IRONLOG</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-[#E5E2E1] hover:bg-[#353534] transition-colors p-2 rounded-lg active:scale-95 duration-100">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<main class="flex-grow pt-24 pb-32 px-4 max-w-2xl mx-auto w-full">
+<!-- Search & Control Deck -->
+<section class="mb-8">
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant/50">search</span>
+</div>
+<input class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary text-on-surface py-4 pl-12 pr-4 font-body tracking-tight placeholder:text-on-surface-variant/30 transition-all" placeholder="Search exercises..." type="text"/>
+</div>
+<!-- Filter Chips - Kinetic Scroll -->
+<div class="flex gap-2 overflow-x-auto py-4 no-scrollbar -mx-4 px-4">
+<button class="whitespace-nowrap bg-primary text-on-primary px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm">All</button>
+<button class="whitespace-nowrap bg-surface-container-high text-on-surface/60 hover:text-on-surface px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm transition-colors">Chest</button>
+<button class="whitespace-nowrap bg-surface-container-high text-on-surface/60 hover:text-on-surface px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm transition-colors">Back</button>
+<button class="whitespace-nowrap bg-surface-container-high text-on-surface/60 hover:text-on-surface px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm transition-colors">Legs</button>
+<button class="whitespace-nowrap bg-surface-container-high text-on-surface/60 hover:text-on-surface px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm transition-colors">Shoulders</button>
+<button class="whitespace-nowrap bg-surface-container-high text-on-surface/60 hover:text-on-surface px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm transition-colors">Arms</button>
+<button class="whitespace-nowrap bg-surface-container-high text-on-surface/60 hover:text-on-surface px-5 py-1.5 font-label text-[10px] font-extrabold uppercase tracking-widest rounded-sm transition-colors">Core</button>
+</div>
+</section>
+<!-- Exercise List -->
+<section class="space-y-4">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-headline font-bold text-xs uppercase tracking-widest text-on-surface-variant">Recommended</h2>
+<span class="font-label text-[10px] text-primary">3 Selected</span>
+</div>
+<div class="grid gap-px bg-outline-variant/10">
+<!-- Exercise Item: Barbell Bench Press -->
+<div class="group relative flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 transition-all duration-300" data-alt="Close-up of a weightlifter performing a barbell bench press in a dimly lit industrial gym setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_oa2SnqwjX_9BjiwanpgjaG9wvRvGt6-kqMkKGb1ZdndsA-nrvirYkPvMR-HhWCN5WNjliYxTnVFhA-snfSnm48b3BlRDFnb3hVHYl_YzNBpwOalyqVW1sX-jWG3epsxP6XGJQziujcKlA5QKqpp0qfpMn_-nBRLJPWV0GGxDRFfgNKeULiBykwgKgDpQ_kJaIIK2pDuwP63Lr-dsem79zfPdMpcP07q29Gr8bK46jmKTIvGRVVS3QD3yMkU7Ugx5RUYCMVe_WOo"/>
+</div>
+<div>
+<h3 class="font-headline font-bold text-lg leading-none tracking-tight">Barbell Bench Press</h3>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mt-1">Chest • Barbell</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-headline font-medium text-xs text-on-surface-variant">PR: 100kg</span>
+<div class="w-6 h-6 border-2 border-primary/30 group-active:scale-90 transition-transform flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-on-primary text-sm font-bold">check</span>
+</div>
+</div>
+</div>
+<!-- Exercise Item: Squat -->
+<div class="group relative flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 transition-all duration-300" data-alt="Focused athlete performing a deep back squat with a heavy barbell in a high-contrast gym environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALDsWGDmVveQ7ZTvsyrqasXsIdJpZdL4PEGoRToHeLxT9HgjcJOeYcz1auxUf6Hyg3QIsLKSFd83Es3IuLAxjmf7_qmvr88aor7KWEHEr0YiVQ3eezmY8GXhyeq0qZwS_PmS5H7yDojZGf9zTgdkHPo0Owb-hGiP5ezoSy-MvlVuKNzdjekIgdrIEZ9LV5X0hU0vD0rWGE5u4MzWLKS6wl8cWKYmiL-uSZNnEXh_Ec2gjakmN9Bv7LF4NT9EjnM2a_gGdbEkEaHCc"/>
+</div>
+<div>
+<h3 class="font-headline font-bold text-lg leading-none tracking-tight">Squat (High Bar)</h3>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mt-1">Legs • Barbell</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-headline font-medium text-xs text-on-surface-variant">PR: 140kg</span>
+<div class="w-6 h-6 border-2 border-primary/30 group-active:scale-90 transition-transform flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-on-primary text-sm font-bold">check</span>
+</div>
+</div>
+</div>
+<!-- Exercise Item: Pull Up -->
+<div class="group relative flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 transition-all duration-300" data-alt="Detail of powerful back muscles engaging during a pull-up on a metal bar with dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOo37V0FGGogi3xKIX2IJLNV4M5zcZq7lqBgsRBwfQyT8x0EvDVgcD79oelVlM30HjOvdbf0C6NLfJuUD4O9TlH0ZoeYEjIupsqiAJy1Xoc7FmMhVzy9MO9ngsPZ3oU4-PQB2_DEFJwGBE63K-7Agzy278VfVwH1pi9drn7udhZQ8CKNUQvMHMwQM_gprbmu-Pc68_u2sf5UPPSg-OWhpEznNLEQNnbwYDBBWXT35J3plx1DYT-DiP30Br02eD9Gx31UHlL1LaN7c"/>
+</div>
+<div>
+<h3 class="font-headline font-bold text-lg leading-none tracking-tight">Pull Up (Weighted)</h3>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mt-1">Back • Bodyweight</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-headline font-medium text-xs text-on-surface-variant">PR: +25kg</span>
+<div class="w-6 h-6 border-2 border-primary/30 group-active:scale-90 transition-transform flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-on-primary text-sm font-bold">check</span>
+</div>
+</div>
+</div>
+<!-- Exercise Item: Inactive -->
+<div class="group relative flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover opacity-30 grayscale group-hover:opacity-60 transition-all duration-300" data-alt="Dumbbells on a rack in a modern industrial gym with sharp shadows and cold steel tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_QKIsezG0-hxAVNe3_UfZDGvkFx1TLeO8xxc5JnLRJY4bE6tfxSvOFO-tbaP95olV2rKyx9Tp6hw4JBAd9DeeI1qtv5YfSCkxJnXR9noRsnylJfuRNlK5_WDNtNy2jNQQkW9BgbgZ5TzT6r0QLoRCiBDcEJ986GZskuTtcA2JimQ9jsvzn4mnRpKxwXcxjwn-R6I049nrFbDhi7ws7VdgLHD3aVkz5WyX2AjNg9kS8O6gA5FcNz3xntfU1SSSMTt3hI2ZgqS2iyA"/>
+</div>
+<div>
+<h3 class="font-headline font-bold text-lg leading-none tracking-tight text-on-surface/80">Dumbbell Fly</h3>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mt-1">Chest • Dumbbell</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-headline font-medium text-xs text-on-surface-variant">PR: 22kg</span>
+<div class="w-6 h-6 border-2 border-outline-variant/30 group-active:scale-90 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined text-transparent text-sm">check</span>
+</div>
+</div>
+</div>
+<!-- Exercise Item: Overhead Press -->
+<div class="group relative flex items-center justify-between p-5 bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover opacity-30 grayscale group-hover:opacity-60 transition-all duration-300" data-alt="Athlete pressing a barbell overhead with intense focus in a dark, atmospheric fitness facility" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3Y1sEfNntX67fKc-xaHyxLaSXdEzus0WwiMQwG-BBMwWhfLg_Yg98awvxfwHgIjczkFhI6nDoziay-u1Kp9k8jExeVxD-l4FjnZjpzCj37tGmLa1xNIXvovfpH_EJgDo7Dy47RsS6J6ioHKISC73vVG-Q1KoFZYdDNneKJSnnYdd1N3hDuGJWSpdKtDL2mPB79MUE8d7NTBPOoLUsqmSXxY3-CPyOhO_eBnonbTqhrR5MJlctVl0qSX0I1hw3qbJRVwLKy9aGli0"/>
+</div>
+<div>
+<h3 class="font-headline font-bold text-lg leading-none tracking-tight text-on-surface/80">Overhead Press</h3>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mt-1">Shoulders • Barbell</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-headline font-medium text-xs text-on-surface-variant">PR: 65kg</span>
+<div class="w-6 h-6 border-2 border-outline-variant/30 group-active:scale-90 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined text-transparent text-sm">check</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Selection Summary / Action Bar -->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-[#0E0E0E] shadow-[0_-4px_24px_rgba(0,0,0,0.4)] px-6 pb-8 pt-4">
+<div class="max-w-2xl mx-auto flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label text-[9px] text-on-surface-variant uppercase tracking-[0.2em] font-black">Exercises Selected</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline text-2xl font-black text-primary">03</span>
+<span class="font-headline text-sm text-on-surface-variant">/ 10 MAX</span>
+</div>
+</div>
+<button class="kinetic-gradient text-on-primary font-headline font-extrabold px-8 py-3.5 flex items-center gap-2 group active:scale-95 transition-all">
+                ADD TO WORKOUT
+                <span class="material-symbols-outlined font-black">arrow_forward</span>
+</button>
+</div>
+</div>
+</body></html>

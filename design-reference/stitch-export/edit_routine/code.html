@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IronLog - Create/Edit Routine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#8e9379",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#506600",
+                        "surface-variant": "#353534",
+                        "surface-container": "#201f1f",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface-bright": "#393939",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "on-background": "#e5e2e1",
+                        "surface-container-highest": "#353534",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary-fixed": "#c3f400",
+                        "on-secondary-fixed": "#1a1b1f",
+                        "secondary-fixed": "#e3e2e7",
+                        "on-tertiary": "#2f3131",
+                        "outline-variant": "#444933",
+                        "surface-container-high": "#2a2a2a",
+                        "tertiary-container": "#e2e2e2",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#131313",
+                        "on-secondary-container": "#b5b4ba",
+                        "secondary-fixed-dim": "#c6c6cb",
+                        "on-secondary": "#2f3034",
+                        "on-primary-container": "#556d00",
+                        "primary-container": "#c3f400",
+                        "surface-dim": "#131313",
+                        "on-secondary-fixed-variant": "#46464b",
+                        "surface-container-low": "#1c1b1b",
+                        "inverse-on-surface": "#313030",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#161e00",
+                        "inverse-surface": "#e5e2e1",
+                        "secondary": "#c6c6cb",
+                        "surface-tint": "#abd600",
+                        "secondary-container": "#46464b",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-surface": "#e5e2e1",
+                        "primary-fixed-dim": "#abd600",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-primary": "#283500",
+                        "on-tertiary-container": "#636565",
+                        "background": "#131313",
+                        "primary": "#CCFF00",
+                        "tertiary": "#ffffff",
+                        "on-error": "#690005"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar Section -->
+<header class="bg-[#0E0E0E] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-[#CCFF00] hover:bg-[#353534] transition-colors p-2 active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-[#CCFF00] font-['Space_Grotesk'] font-black tracking-widest text-2xl uppercase">IRONLOG</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-[#CCFF00] text-[#283500] px-5 py-2 font-['Space_Grotesk'] font-bold text-sm tracking-tight active:scale-95 transition-all">
+                SAVE ROUTINE
+            </button>
+<button class="text-[#E5E2E1] hover:bg-[#353534] transition-colors p-2 active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<main class="max-w-3xl mx-auto px-4 py-10 pb-32">
+<!-- Routine Identity Section -->
+<section class="mb-12">
+<div class="space-y-6">
+<div class="group">
+<label class="block font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-primary mb-2">ROUTINE NAME</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary text-2xl font-['Space_Grotesk'] font-bold text-on-surface p-4 tracking-tight" type="text" value="HYPERTROPHY DAY A"/>
+</div>
+<div class="group">
+<label class="block font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">DESCRIPTION (OPTIONAL)</label>
+<textarea class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary text-on-surface p-4 resize-none font-['Inter']" placeholder="Focus on eccentric control and mechanical tension..." rows="2"></textarea>
+</div>
+</div>
+</section>
+<!-- Exercise Sequence Section -->
+<section>
+<div class="flex justify-between items-end mb-8">
+<h2 class="font-['Space_Grotesk'] text-3xl font-bold tracking-tighter uppercase">Exercise Sequence</h2>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">4 EXERCISES TOTAL</span>
+</div>
+<div class="space-y-4">
+<!-- Exercise Card 1 -->
+<div class="bg-surface-container-low p-1 flex items-stretch">
+<div class="bg-surface-container-high w-12 flex items-center justify-center cursor-grab active:cursor-grabbing text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="flex-1 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<h3 class="font-['Space_Grotesk'] font-bold text-lg leading-none mb-1">BARBELL BACK SQUAT</h3>
+<p class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">COMPOUND • QUADS</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2 group cursor-pointer hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="timer">timer</span>
+<span class="font-['Inter'] text-[11px] font-bold text-on-surface">180s REST</span>
+</div>
+<button class="text-error/60 hover:text-error transition-colors p-2">
+<span class="material-symbols-outlined text-sm" data-icon="close">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Exercise Card 2 -->
+<div class="bg-surface-container-low p-1 flex items-stretch">
+<div class="bg-surface-container-high w-12 flex items-center justify-center cursor-grab text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="flex-1 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<h3 class="font-['Space_Grotesk'] font-bold text-lg leading-none mb-1">ROMANIAN DEADLIFT</h3>
+<p class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">COMPOUND • POSTERIOR CHAIN</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2 group cursor-pointer hover:bg-primary/10 transition-colors border border-primary/20">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="timer">timer</span>
+<span class="font-['Inter'] text-[11px] font-bold text-on-surface">120s REST</span>
+</div>
+<button class="text-error/60 hover:text-error transition-colors p-2">
+<span class="material-symbols-outlined text-sm" data-icon="close">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Exercise Card 3 -->
+<div class="bg-surface-container-low p-1 flex items-stretch border-l-4 border-primary/40">
+<div class="bg-surface-container-high w-12 flex items-center justify-center cursor-grab text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="flex-1 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<h3 class="font-['Space_Grotesk'] font-bold text-lg leading-none mb-1">LEG EXTENSIONS</h3>
+<p class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ISOLATION • QUADS</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2 group cursor-pointer hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="timer">timer</span>
+<span class="font-['Inter'] text-[11px] font-bold text-on-surface">90s REST</span>
+</div>
+<button class="text-error/60 hover:text-error transition-colors p-2">
+<span class="material-symbols-outlined text-sm" data-icon="close">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Exercise Card 4 -->
+<div class="bg-surface-container-low p-1 flex items-stretch">
+<div class="bg-surface-container-high w-12 flex items-center justify-center cursor-grab text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="flex-1 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="fitness_center">fitness_center</span>
+</div>
+<div>
+<h3 class="font-['Space_Grotesk'] font-bold text-lg leading-none mb-1">STANDING CALF RAISE</h3>
+<p class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">ISOLATION • CALVES</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-highest px-3 py-1 flex items-center gap-2 group cursor-pointer hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="timer">timer</span>
+<span class="font-['Inter'] text-[11px] font-bold text-on-surface">60s REST</span>
+</div>
+<button class="text-error/60 hover:text-error transition-colors p-2">
+<span class="material-symbols-outlined text-sm" data-icon="close">close</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Add Exercise CTA -->
+<button class="mt-8 w-full group flex flex-col items-center justify-center py-12 border-2 border-dashed border-surface-container-highest hover:border-primary/40 hover:bg-surface-container-low transition-all">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest group-hover:bg-primary flex items-center justify-center mb-3 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary transition-colors" data-icon="add">add</span>
+</div>
+<span class="font-['Space_Grotesk'] font-bold text-sm tracking-widest uppercase">ADD EXERCISE TO SEQUENCE</span>
+<span class="font-['Inter'] text-[10px] text-on-surface-variant uppercase tracking-widest mt-1">BROWSE DATABASE OR CREATE CUSTOM</span>
+</button>
+</section>
+<!-- Aesthetic Anchor: Technical Detail -->
+<div class="mt-16 flex items-center justify-center gap-8 border-t border-surface-container-highest pt-8">
+<div class="text-center">
+<p class="font-['Inter'] text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">ESTIMATED TIME</p>
+<p class="font-['Space_Grotesk'] text-2xl font-bold text-primary">65 MIN</p>
+</div>
+<div class="w-px h-10 bg-surface-container-highest"></div>
+<div class="text-center">
+<p class="font-['Inter'] text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">VOLUME LOAD</p>
+<p class="font-['Space_Grotesk'] text-2xl font-bold text-primary">~8,400 KG</p>
+</div>
+<div class="w-px h-10 bg-surface-container-highest"></div>
+<div class="text-center">
+<p class="font-['Inter'] text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">INTENSITY</p>
+<p class="font-['Space_Grotesk'] text-2xl font-bold text-primary">RPE 8-9</p>
+</div>
+</div>
+</main>
+<!-- Visual Background Element (Subtle) -->
+<div class="fixed top-0 right-0 -z-10 w-1/3 h-full opacity-[0.03] pointer-events-none overflow-hidden">
+<h1 class="font-['Space_Grotesk'] font-black text-[20rem] leading-none text-white absolute -right-32 top-1/2 -translate-y-1/2 rotate-90">RAW</h1>
+</div>
+</body></html>

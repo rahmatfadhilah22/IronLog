@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IRONLOG - Routines</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#8e9379",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#506600",
+                        "surface-variant": "#353534",
+                        "surface-container": "#201f1f",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "surface-bright": "#393939",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "on-background": "#e5e2e1",
+                        "surface-container-highest": "#353534",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary-fixed": "#c3f400",
+                        "on-secondary-fixed": "#1a1b1f",
+                        "secondary-fixed": "#e3e2e7",
+                        "on-tertiary": "#2f3131",
+                        "outline-variant": "#444933",
+                        "surface-container-high": "#2a2a2a",
+                        "tertiary-container": "#e2e2e2",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#131313",
+                        "on-secondary-container": "#b5b4ba",
+                        "secondary-fixed-dim": "#c6c6cb",
+                        "on-secondary": "#2f3034",
+                        "on-primary-container": "#556d00",
+                        "primary-container": "#c3f400",
+                        "surface-dim": "#131313",
+                        "on-secondary-fixed-variant": "#46464b",
+                        "surface-container-low": "#1c1b1b",
+                        "inverse-on-surface": "#313030",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#161e00",
+                        "inverse-surface": "#e5e2e1",
+                        "secondary": "#c6c6cb",
+                        "surface-tint": "#abd600",
+                        "secondary-container": "#46464b",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-fixed-variant": "#3c4d00",
+                        "on-surface": "#e5e2e1",
+                        "primary-fixed-dim": "#abd600",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#c4c9ac",
+                        "on-primary": "#283500",
+                        "on-tertiary-container": "#636565",
+                        "background": "#131313",
+                        "primary": "#CCFF00",
+                        "tertiary": "#ffffff",
+                        "on-error": "#690005"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-[#0E0E0E] fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-4">
+<button class="text-[#CCFF00] hover:bg-[#353534] transition-colors active:scale-95 duration-100 p-2 rounded">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="text-2xl font-black text-[#CCFF00] tracking-widest font-['Space_Grotesk'] uppercase">IRONLOG</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-[#CCFF00] hover:bg-[#353534] transition-colors active:scale-95 duration-100 p-2 rounded">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+<!-- Section Header -->
+<div class="flex justify-between items-end mb-10">
+<div>
+<p class="font-label text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-2">TRAINING ARCHIVE</p>
+<h2 class="font-headline text-5xl font-black tracking-tighter uppercase leading-none">ROUTINES</h2>
+</div>
+<button class="bg-primary text-on-primary font-headline font-bold px-6 py-3 flex items-center gap-2 active:scale-95 transition-all shadow-lg">
+<span class="material-symbols-outlined">add</span>
+<span class="text-sm tracking-widest uppercase">NEW ROUTINE</span>
+</button>
+</div>
+<!-- Routine Grid/List -->
+<div class="space-y-4">
+<!-- Routine Card 1 -->
+<div class="bg-surface-container-low group relative overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between p-6 transition-all hover:bg-surface-container-high border-l-4 border-primary/20 hover:border-primary">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] font-bold text-primary/60 tracking-widest uppercase">STRENGTH / HYPERTROPHY</span>
+</div>
+<h3 class="font-headline text-3xl font-bold uppercase tracking-tight mb-4">Push A: Heavy Volume</h3>
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">EXERCISES</span>
+<span class="font-headline text-xl font-medium">8 MOVEMENTS</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">EST. TIME</span>
+<span class="font-headline text-xl font-medium">75 MINS</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">LAST DONE</span>
+<span class="font-headline text-xl font-medium">2D AGO</span>
+</div>
+</div>
+</div>
+<div class="mt-6 md:mt-0 flex items-center gap-4">
+<button class="bg-surface-container-highest text-on-surface-variant font-label text-[11px] font-bold px-4 py-3 uppercase tracking-widest hover:text-primary transition-colors">
+                        EDIT
+                    </button>
+<button class="bg-primary text-on-primary font-headline font-black px-8 py-4 uppercase tracking-tighter flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        START
+                    </button>
+</div>
+</div>
+<!-- Routine Card 2 -->
+<div class="bg-surface-container-low group relative overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between p-6 transition-all hover:bg-surface-container-high border-l-4 border-primary/20 hover:border-primary">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] font-bold text-primary/60 tracking-widest uppercase">LOWER BODY</span>
+</div>
+<h3 class="font-headline text-3xl font-bold uppercase tracking-tight mb-4">Legs &amp; Core Stability</h3>
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">EXERCISES</span>
+<span class="font-headline text-xl font-medium">6 MOVEMENTS</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">EST. TIME</span>
+<span class="font-headline text-xl font-medium">60 MINS</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">LAST DONE</span>
+<span class="font-headline text-xl font-medium">5D AGO</span>
+</div>
+</div>
+</div>
+<div class="mt-6 md:mt-0 flex items-center gap-4">
+<button class="bg-surface-container-highest text-on-surface-variant font-label text-[11px] font-bold px-4 py-3 uppercase tracking-widest hover:text-primary transition-colors">
+                        EDIT
+                    </button>
+<button class="bg-primary text-on-primary font-headline font-black px-8 py-4 uppercase tracking-tighter flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        START
+                    </button>
+</div>
+</div>
+<!-- Routine Card 3 -->
+<div class="bg-surface-container-low group relative overflow-hidden flex flex-col md:flex-row items-stretch md:items-center justify-between p-6 transition-all hover:bg-surface-container-high border-l-4 border-primary/20 hover:border-primary">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] font-bold text-primary/60 tracking-widest uppercase">UPPER BODY</span>
+</div>
+<h3 class="font-headline text-3xl font-bold uppercase tracking-tight mb-4">Pull B: Posterior Chain</h3>
+<div class="flex gap-6">
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">EXERCISES</span>
+<span class="font-headline text-xl font-medium">9 MOVEMENTS</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">EST. TIME</span>
+<span class="font-headline text-xl font-medium">90 MINS</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60">LAST DONE</span>
+<span class="font-headline text-xl font-medium">YESTERDAY</span>
+</div>
+</div>
+</div>
+<div class="mt-6 md:mt-0 flex items-center gap-4">
+<button class="bg-surface-container-highest text-on-surface-variant font-label text-[11px] font-bold px-4 py-3 uppercase tracking-widest hover:text-primary transition-colors">
+                        EDIT
+                    </button>
+<button class="bg-primary text-on-primary font-headline font-black px-8 py-4 uppercase tracking-tighter flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                        START
+                    </button>
+</div>
+</div>
+<!-- Empty State / Suggestion -->
+<div class="mt-12 p-8 border-2 border-dashed border-surface-container-highest flex flex-col items-center justify-center text-center opacity-60">
+<span class="material-symbols-outlined text-4xl mb-4">fitness_center</span>
+<p class="font-headline text-lg uppercase tracking-widest font-bold">Need a new plan?</p>
+<p class="text-sm font-body mt-2 mb-6">Import a routine from the exercise database or create a custom split.</p>
+<button class="font-label text-[11px] font-bold uppercase tracking-widest text-primary border-b border-primary pb-1">BROWSE DATABASE</button>
+</div>
+</div>
+</main>
+<!-- Navigation Drawer (Hidden by default, structure provided) -->
+<aside class="hidden fixed inset-y-0 left-0 w-80 bg-[#131313] z-[60] shadow-2xl shadow-black flex-col p-6 font-['Space_Grotesk'] font-medium">
+<div class="flex items-center gap-4 mb-10">
+<div class="w-12 h-12 bg-surface-container-high rounded-full overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Close-up artistic black and white portrait of a determined athlete with sweat drops and dramatic rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKp0qrWhXLUxpeTCxxWMHxXLn2MGjlAczxNLYzkfCc8IzwaQMG2Wx6EW5Em9bvxR6Hp5A-fxX0VOz04x-9DGdJ6uFPPeheMxsL2AvZ_WiihsbVOSxikqh5MMxjlkRsOTL5WLdxp2-PLu3-x9OeAc1YDN-a1yeYiqwAbzvi21XvgTpGr0GVYvHcyIv_dA_WH9Bv75p8eIDA2wJumR-sT1nqJziTUO_BFHmqgk_3qO9GaCk6s5fzAuVgKT-4P60o5OxBMm1eJBWD_3k"/>
+</div>
+<div>
+<h4 class="text-[#CCFF00] font-black text-lg">IRON_USER_01</h4>
+<p class="text-[10px] text-on-surface/60 uppercase">Current Streak: 12 Days</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-4 p-4 text-[#E5E2E1] hover:bg-[#0E0E0E] transition-transform duration-300" href="#">
+<span class="material-symbols-outlined">history</span>
+<span>Workout History</span>
+</a>
+<a class="flex items-center gap-4 p-4 text-[#E5E2E1] hover:bg-[#0E0E0E] transition-transform duration-300" href="#">
+<span class="material-symbols-outlined">database</span>
+<span>Exercise Database</span>
+</a>
+<a class="flex items-center gap-4 p-4 text-[#E5E2E1] hover:bg-[#0E0E0E] transition-transform duration-300" href="#">
+<span class="material-symbols-outlined">calculate</span>
+<span>Plate Calculator</span>
+</a>
+<a class="flex items-center gap-4 p-4 text-[#E5E2E1] hover:bg-[#0E0E0E] transition-transform duration-300" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-4 p-4 text-[#E5E2E1] hover:bg-[#0E0E0E] transition-transform duration-300" href="#">
+<span class="material-symbols-outlined">file_download</span>
+<span>Export Data</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-surface-container-highest">
+<p class="text-[10px] text-on-surface/40 font-bold uppercase tracking-widest">V2.4.0</p>
+</div>
+</aside>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-[#0E0E0E] pb-safe z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.4)]">
+<a class="flex flex-col items-center justify-center text-[#E5E2E1]/50 pt-3 pb-4 flex-1 hover:text-[#E5E2E1] transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined mb-1">home_max</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest">HOME</span>
+</a>
+<!-- ACTIVE TAB: ROUTINES -->
+<a class="flex flex-col items-center justify-center text-[#CCFF00] border-t-4 border-[#CCFF00] pt-2 pb-4 flex-1 transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest">ROUTINES</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#E5E2E1]/50 pt-3 pb-4 flex-1 hover:text-[#E5E2E1] transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined mb-1">monitoring</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest">PROGRESS</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#E5E2E1]/50 pt-3 pb-4 flex-1 hover:text-[#E5E2E1] transition-all active:opacity-80" href="#">
+<span class="material-symbols-outlined mb-1">straighten</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest">METRICS</span>
+</a>
+</nav>
+</body></html>
