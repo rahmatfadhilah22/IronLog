@@ -35,6 +35,10 @@ class AppSettingsService {
 
     return settings;
   }
+
+  clearCache(): void {
+    this.cache = null;
+  }
 }
 
 export const appSettingsService = new AppSettingsService();
