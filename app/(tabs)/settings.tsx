@@ -2,7 +2,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { APP_NAME } from "../../src/core/constants";
+import { ConfirmationDialog } from "../../src/components";
 import { themeTokens } from "../../src/core/theme";
 import { analyticsService } from "../../src/services/analytics";
 import { backupService, getBackupWarningText } from "../../src/services/backup";
@@ -29,6 +29,10 @@ export default function SettingsScreen() {
   const [oneRmFormula, setOneRmFormula] = useState<OneRmFormula>("brzycki");
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [autoStartRestTimer, setAutoStartRestTimer] = useState(true);
+  const [pendingRestore, setPendingRestore] = useState<{
+    payload: Parameters<typeof backupService.restoreFromBackup>[0];
+    sourceName: string;
+  } | null>(null);
 
   const loadSettings = useCallback(() => {
     let isActive = true;
@@ -143,20 +147,10 @@ export default function SettingsScreen() {
         return;
       }
 
-      Alert.alert(
-        "Restore Backup JSON?",
-        `${getBackupWarningText()}\n\nFile: ${parsed.sourceName}`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Restore",
-            style: "destructive",
-            onPress: () => {
-              void confirmRestore(parsed.payload);
-            },
-          },
-        ],
-      );
+      setPendingRestore({
+        payload: parsed.payload,
+        sourceName: parsed.sourceName,
+      });
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : "Import JSON gagal.");
     } finally {
@@ -195,18 +189,19 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.contentContainer,
-        { paddingBottom: insets.bottom + themeTokens.spacing.xxl },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.headerEyebrow}>System Configuration</Text>
-        <Text style={styles.headerTitle}>Settings</Text>
-      </View>
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: insets.bottom + themeTokens.spacing.xxl },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerEyebrow}>System Configuration</Text>
+          <Text style={styles.headerTitle}>Settings</Text>
+        </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
@@ -309,7 +304,26 @@ export default function SettingsScreen() {
       {isBusy ? <Text style={styles.infoText}>Processing...</Text> : null}
       {successMessage ? <Text style={styles.successText}>{successMessage}</Text> : null}
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-    </ScrollView>
+      </ScrollView>
+
+      <ConfirmationDialog
+        visible={pendingRestore !== null}
+        title="Restore Backup JSON?"
+        message={
+          pendingRestore
+            ? `${getBackupWarningText()}\n\nFile: ${pendingRestore.sourceName}`
+            : ""
+        }
+        confirmLabel="Restore"
+        onCancel={() => setPendingRestore(null)}
+        onConfirm={() => {
+          if (pendingRestore) {
+            void confirmRestore(pendingRestore.payload);
+          }
+          setPendingRestore(null);
+        }}
+      />
+    </>
   );
 }
 

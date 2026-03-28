@@ -1,5 +1,6 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,13 +12,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PrimaryButton } from "../../components";
+import { ConfirmationDialog, PrimaryButton } from "../../components";
 import { themeTokens } from "../../core/theme";
 import { createId } from "../../core/utils";
 import { routineService } from "../../services/routines";
 import { workoutService } from "../../services/workouts";
 import { useExercisePickerStore } from "../../stores";
 import type { RoutineExerciseDraft } from "../../types/routine";
+import type { ActiveWorkoutReference } from "../../types/workout";
 
 type RoutineEditorScreenProps = {
   mode: "create" | "edit";
@@ -39,14 +41,17 @@ export function RoutineEditorScreen({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pickerRequestKey, setPickerRequestKey] = useState<string | null>(null);
+  const [pendingRemoveExercise, setPendingRemoveExercise] =
+    useState<RoutineExerciseDraft | null>(null);
+  const [activeWorkout, setActiveWorkout] = useState<ActiveWorkoutReference | null>(null);
   const handledPickRef = useRef<string | null>(null);
   const picked = useExercisePickerStore((state) => state.picked);
   const beginRequest = useExercisePickerStore((state) => state.beginRequest);
   const clearPicked = useExercisePickerStore((state) => state.clearPicked);
 
-  useEffect(() => {
+  const loadRoutine = useCallback(() => {
     if (mode !== "edit" || !routineId) {
-      return;
+      return () => undefined;
     }
 
     let isActive = true;
@@ -86,6 +91,31 @@ export function RoutineEditorScreen({
       isActive = false;
     };
   }, [mode, routineId]);
+
+  useEffect(loadRoutine, [loadRoutine]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      workoutService
+        .getActiveWorkout()
+        .then((nextActiveWorkout) => {
+          if (isActive) {
+            setActiveWorkout(nextActiveWorkout);
+          }
+        })
+        .catch(() => {
+          if (isActive) {
+            setActiveWorkout(null);
+          }
+        });
+
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
 
   useEffect(() => {
     if (!picked || !pickerRequestKey) {
@@ -140,6 +170,22 @@ export function RoutineEditorScreen({
     return name.trim().length > 0 && exercises.length > 0 && !isSaving;
   }, [exercises.length, isSaving, name]);
 
+  const startWorkoutLabel = useMemo(() => {
+    if (mode !== "edit") {
+      return "Start Workout";
+    }
+
+    if (!activeWorkout) {
+      return "Start Workout";
+    }
+
+    if (activeWorkout.routineId && activeWorkout.routineId === routineId) {
+      return "Continue Workout";
+    }
+
+    return "Open Active Workout";
+  }, [activeWorkout, mode, routineId]);
+
   const onOpenExercisePicker = () => {
     const requestKey = createId();
     const excludeIds = exercises.map((exercise) => exercise.exerciseId).join(",");
@@ -161,6 +207,10 @@ export function RoutineEditorScreen({
     setExercises((previous) =>
       previous.filter((exercise) => exercise.localId !== localId),
     );
+  };
+
+  const onConfirmRemoveExercise = (exercise: RoutineExerciseDraft) => {
+    setPendingRemoveExercise(exercise);
   };
 
   const onMoveExercise = (index: number, direction: -1 | 1) => {
@@ -241,6 +291,11 @@ export function RoutineEditorScreen({
       return;
     }
 
+    if (activeWorkout) {
+      router.push(`/workout/${activeWorkout.id}` as never);
+      return;
+    }
+
     setErrorMessage(null);
     setSuccessMessage(null);
     setIsStartingWorkout(true);
@@ -270,134 +325,194 @@ export function RoutineEditorScreen({
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.contentContainer,
-        { paddingBottom: insets.bottom + themeTokens.spacing.xxl + themeTokens.spacing.lg },
-      ]}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.section}>
-        <Text style={styles.sectionEyebrow}>
-          {mode === "create" ? "NEW ROUTINE" : "EDIT ROUTINE"}
-        </Text>
-        <Text style={styles.sectionTitle}>
-          {mode === "create" ? "Create Routine" : "Routine Detail"}
-        </Text>
-        {mode === "edit" ? (
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: insets.bottom + themeTokens.spacing.xxl + themeTokens.spacing.lg },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.section}>
+          <Text style={styles.sectionEyebrow}>
+            {mode === "create" ? "NEW ROUTINE" : "EDIT ROUTINE"}
+          </Text>
+          <Text style={styles.sectionTitle}>
+            {mode === "create" ? "Create Routine" : "Routine Detail"}
+          </Text>
+          {mode === "edit" ? (
           <PrimaryButton
-            label={isStartingWorkout ? "Opening Workout..." : "Start Workout"}
+            label={isStartingWorkout ? "Opening Workout..." : startWorkoutLabel}
             onPress={() => {
               void onStartWorkout();
             }}
             disabled={isStartingWorkout || isSaving}
             style={styles.startWorkoutButton}
           />
-        ) : null}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.fieldLabel}>NAME</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="Contoh: PUSH DAY A"
-          placeholderTextColor={themeTokens.colors.textSecondary}
-          style={styles.nameInput}
-          autoCapitalize="words"
-          autoCorrect={false}
-          spellCheck={false}
-          autoComplete="off"
-        />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-        <TextInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Opsional"
-          placeholderTextColor={themeTokens.colors.textSecondary}
-          style={styles.descriptionInput}
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.exerciseHeader}>
-          <Text style={styles.sectionTitle}>Exercise Sequence</Text>
-          <Text style={styles.exerciseCount}>{exercises.length} EXERCISES</Text>
+          ) : null}
         </View>
-        <View style={styles.exerciseList}>
-          {exercises.map((exercise, index) => (
-            <View key={exercise.localId} style={styles.exerciseCard}>
-              <View style={styles.exerciseTopRow}>
-                <Text style={styles.exerciseName}>{exercise.name}</Text>
-                <Pressable
-                  onPress={() => {
-                    onRemoveExercise(exercise.localId);
-                  }}
-                  hitSlop={8}
-                >
-                  <Text style={styles.removeLabel}>REMOVE</Text>
-                </Pressable>
-              </View>
-              <Text style={styles.exerciseMeta}>
-                {exercise.muscleGroup.toUpperCase()} •{" "}
-                {exercise.equipmentType.toUpperCase()}
-              </Text>
-              <View style={styles.exerciseControls}>
-                <View style={styles.reorderControls}>
+
+        <View style={styles.section}>
+          <Text style={styles.fieldLabel}>NAME</Text>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="Contoh: PUSH DAY A"
+            placeholderTextColor={themeTokens.colors.textSecondary}
+            style={styles.nameInput}
+            autoCapitalize="words"
+            autoCorrect={false}
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Opsional"
+            placeholderTextColor={themeTokens.colors.textSecondary}
+            style={styles.descriptionInput}
+            multiline
+            numberOfLines={3}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.exerciseHeader}>
+            <Text style={styles.sectionTitle}>Exercise Sequence</Text>
+            <Text style={styles.exerciseCount}>{exercises.length} EXERCISES</Text>
+          </View>
+          <View style={styles.exerciseList}>
+            {exercises.map((exercise, index) => (
+              <View key={exercise.localId} style={styles.exerciseCard}>
+                <View style={styles.exerciseTopRow}>
+                  <View style={styles.exerciseTitleWrap}>
+                    <View style={styles.orderBadge}>
+                      <Text style={styles.orderBadgeLabel}>{index + 1}</Text>
+                    </View>
+                    <Text style={styles.exerciseName}>{exercise.name}</Text>
+                  </View>
                   <Pressable
-                    style={styles.secondaryControl}
                     onPress={() => {
-                      onMoveExercise(index, -1);
+                      onConfirmRemoveExercise(exercise);
                     }}
+                    style={({ pressed }) => [
+                      styles.removeButton,
+                      pressed ? styles.removeButtonPressed : null,
+                    ]}
+                    hitSlop={8}
                   >
-                    <Text style={styles.secondaryControlLabel}>UP</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.secondaryControl}
-                    onPress={() => {
-                      onMoveExercise(index, 1);
-                    }}
-                  >
-                    <Text style={styles.secondaryControlLabel}>DOWN</Text>
+                    <Text style={styles.removeLabel}>REMOVE</Text>
                   </Pressable>
                 </View>
-                <View style={styles.restInputGroup}>
-                  <Text style={styles.restLabel}>REST (SEC)</Text>
-                  <TextInput
-                    value={String(exercise.restTimeSeconds)}
-                    onChangeText={(value) => {
-                      onUpdateRestTime(exercise.localId, value);
-                    }}
-                    keyboardType="number-pad"
-                    style={styles.restInput}
-                  />
+                <Text style={styles.exerciseMeta}>
+                  {exercise.muscleGroup.toUpperCase()} •{" "}
+                  {exercise.equipmentType.toUpperCase()}
+                </Text>
+                <View style={styles.exerciseControls}>
+                  <View style={styles.controlBlock}>
+                    <Text style={styles.controlLabel}>ORDER</Text>
+                    <View style={styles.reorderControls}>
+                      <Pressable
+                        style={[
+                          styles.secondaryControl,
+                          index === 0 ? styles.secondaryControlDisabled : null,
+                        ]}
+                        onPress={() => {
+                          onMoveExercise(index, -1);
+                        }}
+                        disabled={index === 0}
+                      >
+                        <Text
+                          style={[
+                            styles.secondaryControlLabel,
+                            index === 0 ? styles.secondaryControlLabelDisabled : null,
+                          ]}
+                        >
+                          UP
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        style={[
+                          styles.secondaryControl,
+                          index === exercises.length - 1
+                            ? styles.secondaryControlDisabled
+                            : null,
+                        ]}
+                        onPress={() => {
+                          onMoveExercise(index, 1);
+                        }}
+                        disabled={index === exercises.length - 1}
+                      >
+                        <Text
+                          style={[
+                            styles.secondaryControlLabel,
+                            index === exercises.length - 1
+                              ? styles.secondaryControlLabelDisabled
+                              : null,
+                          ]}
+                        >
+                          DOWN
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                  <View style={styles.controlBlock}>
+                    <Text style={styles.controlLabel}>REST (SEC)</Text>
+                    <View style={styles.restInputGroup}>
+                      <TextInput
+                        value={String(exercise.restTimeSeconds)}
+                        onChangeText={(value) => {
+                          onUpdateRestTime(exercise.localId, value);
+                        }}
+                        keyboardType="number-pad"
+                        style={styles.restInput}
+                      />
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
+            ))}
+          </View>
+          <Pressable style={styles.addExerciseButton} onPress={onOpenExercisePicker}>
+            <Text style={styles.addExerciseLabel}>Add Exercise</Text>
+          </Pressable>
         </View>
-        <Pressable style={styles.addExerciseButton} onPress={onOpenExercisePicker}>
-          <Text style={styles.addExerciseLabel}>Add Exercise</Text>
-        </Pressable>
-      </View>
 
-      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-      {successMessage ? <Text style={styles.successText}>{successMessage}</Text> : null}
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+        {successMessage ? <Text style={styles.successText}>{successMessage}</Text> : null}
 
-      <PrimaryButton
-        label={isSaving ? "Saving..." : "Save Routine"}
-        onPress={onSave}
-        disabled={!canSave}
-        style={styles.saveButton}
+        <PrimaryButton
+          label={isSaving ? "Saving..." : "Save Routine"}
+          onPress={onSave}
+          disabled={!canSave}
+          style={styles.saveButton}
+        />
+      </ScrollView>
+
+      <ConfirmationDialog
+        visible={pendingRemoveExercise !== null}
+        title="Remove Exercise?"
+        message={
+          pendingRemoveExercise
+            ? `${pendingRemoveExercise.name} will be removed from this routine.`
+            : ""
+        }
+        confirmLabel="Remove"
+        onCancel={() => setPendingRemoveExercise(null)}
+        onConfirm={() => {
+          if (pendingRemoveExercise) {
+            onRemoveExercise(pendingRemoveExercise.localId);
+          }
+          setPendingRemoveExercise(null);
+        }}
       />
-    </ScrollView>
+    </>
   );
 }
 
@@ -489,8 +604,27 @@ const styles = StyleSheet.create({
   exerciseTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: themeTokens.spacing.sm,
+  },
+  exerciseTitleWrap: {
+    flex: 1,
+    flexDirection: "row",
     alignItems: "center",
     gap: themeTokens.spacing.sm,
+  },
+  orderBadge: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: themeTokens.colors.accentPrimary,
+  },
+  orderBadgeLabel: {
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 12,
+    fontWeight: "900",
   },
   exerciseName: {
     flex: 1,
@@ -500,10 +634,23 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   removeLabel: {
-    color: themeTokens.colors.danger,
-    fontSize: 11,
-    fontWeight: "700",
+    color: "#FF8D7E",
+    fontSize: 10,
+    fontWeight: "800",
     letterSpacing: 0.8,
+  },
+  removeButton: {
+    minHeight: 28,
+    borderRadius: themeTokens.radius.sm,
+    paddingHorizontal: themeTokens.spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(230, 88, 74, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 141, 126, 0.32)",
+  },
+  removeButtonPressed: {
+    opacity: 0.82,
   },
   exerciseMeta: {
     color: themeTokens.colors.textSecondary,
@@ -514,8 +661,19 @@ const styles = StyleSheet.create({
   exerciseControls: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
     gap: themeTokens.spacing.md,
+  },
+  controlBlock: {
+    flex: 1,
+    gap: themeTokens.spacing.xs,
+  },
+  controlLabel: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.9,
+    textTransform: "uppercase",
   },
   reorderControls: {
     flexDirection: "row",
@@ -530,25 +688,24 @@ const styles = StyleSheet.create({
     borderRadius: themeTokens.radius.sm,
     paddingHorizontal: themeTokens.spacing.sm,
   },
+  secondaryControlDisabled: {
+    opacity: 0.4,
+  },
   secondaryControlLabel: {
     color: themeTokens.colors.textPrimary,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.8,
   },
-  restInputGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: themeTokens.spacing.sm,
-  },
-  restLabel: {
+  secondaryControlLabelDisabled: {
     color: themeTokens.colors.textSecondary,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.8,
+  },
+  restInputGroup: {
+    minHeight: 36,
+    justifyContent: "center",
   },
   restInput: {
-    minWidth: 78,
+    minWidth: 88,
     backgroundColor: themeTokens.colors.surfaceHighest,
     color: themeTokens.colors.textPrimary,
     borderRadius: themeTokens.radius.sm,

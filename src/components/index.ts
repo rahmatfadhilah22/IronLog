@@ -1,3 +1,4 @@
+export { ConfirmationDialog } from "./confirmation-dialog";
 export { EmptyState } from "./empty-state";
 export { PrimaryButton } from "./primary-button";
 export { RoutineCard } from "./routine-card";

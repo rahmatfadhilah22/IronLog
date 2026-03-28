@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,7 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { PrimaryButton } from "../../components";
+import { ConfirmationDialog, PrimaryButton } from "../../components";
 import { themeTokens } from "../../core/theme";
 import { convertWeight, createId } from "../../core/utils";
 import { appSettingsService } from "../../services/settings";
@@ -45,6 +44,8 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [nowTimestamp, setNowTimestamp] = useState(Date.now());
+  const [pendingDeleteSet, setPendingDeleteSet] = useState<WorkoutSet | null>(null);
+  const [isFinishDialogVisible, setIsFinishDialogVisible] = useState(false);
   const handledPickRef = useRef<string | null>(null);
 
   const picked = useExercisePickerStore((state) => state.picked);
@@ -330,6 +331,10 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     }
   };
 
+  const onConfirmDeleteSet = (workoutSet: WorkoutSet) => {
+    setPendingDeleteSet(workoutSet);
+  };
+
   const onFinishWorkoutConfirmed = async () => {
     setIsMutating(true);
     setErrorMessage(null);
@@ -344,20 +349,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   };
 
   const onFinishWorkout = () => {
-    Alert.alert(
-      "Selesaikan workout?",
-      "Status workout akan ditutup sebagai completed.",
-      [
-        { text: "Batal", style: "cancel" },
-        {
-          text: "Finish",
-          style: "destructive",
-          onPress: () => {
-            void onFinishWorkoutConfirmed();
-          },
-        },
-      ],
-    );
+    setIsFinishDialogVisible(true);
   };
 
   if (isLoading) {
@@ -384,20 +376,21 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
-    >
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingBottom: insets.bottom + themeTokens.spacing.xxl },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingBottom: insets.bottom + themeTokens.spacing.xxl },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.headerRow}>
           <View style={styles.headerInfo}>
             <Text style={styles.eyebrow}>Current Session</Text>
@@ -629,7 +622,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
                     </Pressable>
                     <Pressable
                       onPress={() => {
-                        void onDeleteSet(setItem.id);
+                        onConfirmDeleteSet(setItem);
                       }}
                       style={styles.rowDangerButton}
                     >
@@ -642,17 +635,49 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
           )}
         </View>
 
-        <Pressable
-          onPress={onOpenExercisePicker}
-          style={({ pressed }) => [
-            styles.addExerciseButton,
-            pressed ? styles.addExercisePressed : null,
-          ]}
-        >
-          <Text style={styles.addExerciseLabel}>Add Exercise Block</Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Pressable
+            onPress={onOpenExercisePicker}
+            style={({ pressed }) => [
+              styles.addExerciseButton,
+              pressed ? styles.addExercisePressed : null,
+            ]}
+          >
+            <Text style={styles.addExerciseLabel}>Add Exercise Block</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      <ConfirmationDialog
+        visible={pendingDeleteSet !== null}
+        title="Delete Set?"
+        message={
+          pendingDeleteSet
+            ? `Set ${pendingDeleteSet.setNumber} will be removed from ${selectedExercise?.displayName ?? "this exercise"}.`
+            : ""
+        }
+        confirmLabel="Delete"
+        onCancel={() => setPendingDeleteSet(null)}
+        onConfirm={() => {
+          if (pendingDeleteSet) {
+            void onDeleteSet(pendingDeleteSet.id);
+          }
+          setPendingDeleteSet(null);
+        }}
+      />
+
+      <ConfirmationDialog
+        visible={isFinishDialogVisible}
+        title="Finish Workout?"
+        message="This workout will be marked as completed."
+        confirmLabel="Finish"
+        tone="accent"
+        onCancel={() => setIsFinishDialogVisible(false)}
+        onConfirm={() => {
+          setIsFinishDialogVisible(false);
+          void onFinishWorkoutConfirmed();
+        }}
+      />
+    </>
   );
 }
 
