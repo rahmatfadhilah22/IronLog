@@ -4,7 +4,7 @@ export default function NotFoundScreen() {
   return (
     <StagePlaceholderScreen
       title="Route Not Found"
-      description="Halaman yang diminta tidak ditemukan."
+      description="The page you requested could not be found."
     />
   );
 }

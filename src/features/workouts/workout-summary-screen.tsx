@@ -39,7 +39,7 @@ export function WorkoutSummaryScreen({ workoutId }: WorkoutSummaryScreenProps) {
         }
 
         if (!result) {
-          setErrorMessage("Summary workout tidak ditemukan.");
+          setErrorMessage("Workout summary not found.");
           return;
         }
 
@@ -47,7 +47,7 @@ export function WorkoutSummaryScreen({ workoutId }: WorkoutSummaryScreenProps) {
       })
       .catch((error: unknown) => {
         if (isActive) {
-          setErrorMessage(error instanceof Error ? error.message : "Gagal memuat summary.");
+          setErrorMessage(error instanceof Error ? error.message : "Failed to load summary.");
         }
       })
       .finally(() => {
@@ -72,7 +72,7 @@ export function WorkoutSummaryScreen({ workoutId }: WorkoutSummaryScreenProps) {
     return (
       <View style={styles.centerState}>
         <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
-        <Text style={styles.stateLabel}>Memuat summary...</Text>
+        <Text style={styles.stateLabel}>Loading summary...</Text>
       </View>
     );
   }
@@ -80,7 +80,7 @@ export function WorkoutSummaryScreen({ workoutId }: WorkoutSummaryScreenProps) {
   if (!summary) {
     return (
       <View style={styles.centerState}>
-        <Text style={styles.errorText}>{errorMessage ?? "Summary tidak tersedia."}</Text>
+        <Text style={styles.errorText}>{errorMessage ?? "Summary unavailable."}</Text>
         <PrimaryButton
           label="Back To Home"
           onPress={() => {
@@ -138,7 +138,7 @@ export function WorkoutSummaryScreen({ workoutId }: WorkoutSummaryScreenProps) {
             </Text>
           </>
         ) : (
-          <Text style={styles.topSetMeta}>Belum ada set yang tercatat.</Text>
+          <Text style={styles.topSetMeta}>No completed sets were recorded.</Text>
         )}
       </View>
 

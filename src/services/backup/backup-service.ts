@@ -122,7 +122,7 @@ class BackupService {
   async shareFile(fileUri: string): Promise<void> {
     const isAvailable = await Sharing.isAvailableAsync();
     if (!isAvailable) {
-      throw new Error("Share tidak tersedia di device ini.");
+      throw new Error("Sharing is not available on this device.");
     }
     await Sharing.shareAsync(fileUri);
   }
@@ -145,7 +145,7 @@ class BackupService {
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      throw new Error("File JSON tidak valid.");
+      throw new Error("Invalid JSON file.");
     }
 
     const payload = validateBackupPayload(parsed);
@@ -224,7 +224,7 @@ async function writeTextFile(
 ): Promise<string> {
   const baseDirectory = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
   if (!baseDirectory) {
-    throw new Error("Directory lokal tidak tersedia untuk menyimpan file backup.");
+    throw new Error("No local directory is available to save backup files.");
   }
 
   const folderUri = `${baseDirectory}${BACKUP_FOLDER_NAME}`;
@@ -261,34 +261,34 @@ function toCsvLine(fields: string[]): string {
 
 function validateBackupPayload(raw: unknown): IronLogBackupPayload {
   if (!isObjectRecord(raw)) {
-    throw new Error("Struktur backup tidak valid.");
+    throw new Error("Invalid backup structure.");
   }
 
   if (raw.format !== "ironlog-backup") {
-    throw new Error("Format backup tidak dikenali.");
+    throw new Error("Backup format is not recognized.");
   }
 
   if (typeof raw.schemaVersion !== "number") {
-    throw new Error("Schema version backup tidak valid.");
+    throw new Error("Backup schema version is invalid.");
   }
 
   if (raw.schemaVersion !== BACKUP_SCHEMA_VERSION) {
     throw new Error(
-      `Backup schema version ${String(raw.schemaVersion)} tidak didukung oleh versi app ini.`,
+      `Backup schema version ${String(raw.schemaVersion)} is not supported by this app version.`,
     );
   }
 
   if (typeof raw.exportedAt !== "string") {
-    throw new Error("Timestamp backup tidak valid.");
+    throw new Error("Backup timestamp is invalid.");
   }
 
   if (!isObjectRecord(raw.data)) {
-    throw new Error("Data backup tidak valid.");
+    throw new Error("Backup data is invalid.");
   }
 
   for (const tableName of TABLE_NAMES) {
     if (!Array.isArray(raw.data[tableName])) {
-      throw new Error(`Data table "${tableName}" tidak ditemukan di backup.`);
+      throw new Error(`Table "${tableName}" was not found in the backup file.`);
     }
   }
 
@@ -615,5 +615,5 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function getBackupWarningText(): string {
-  return `${APP_NAME} restore akan mengganti seluruh data lokal saat ini dengan isi backup terpilih.`;
+  return `${APP_NAME} restore will replace all current local data with the selected backup.`;
 }

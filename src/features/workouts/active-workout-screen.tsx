@@ -61,7 +61,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       const nextWorkout = await workoutService.getWorkoutById(workoutId);
       if (!nextWorkout) {
         setWorkout(null);
-        setErrorMessage("Workout tidak ditemukan.");
+        setErrorMessage("Workout not found.");
         return;
       }
 
@@ -80,7 +80,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
         return nextWorkout.exercises[0]?.id ?? null;
       });
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal memuat workout.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to load workout.");
     } finally {
       if (!silent) {
         setIsLoading(false);
@@ -152,10 +152,10 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       .addExerciseBlock(workout.id, picked.exerciseId)
       .then(async () => {
         await refreshWorkout(true);
-        setFeedbackMessage("Exercise block ditambahkan.");
+        setFeedbackMessage("Exercise block added.");
       })
       .catch((error: unknown) => {
-        setErrorMessage(error instanceof Error ? error.message : "Gagal menambah exercise.");
+        setErrorMessage(error instanceof Error ? error.message : "Failed to add exercise.");
       })
       .finally(() => {
         setIsMutating(false);
@@ -242,12 +242,12 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     const parsedRpe = Number.isInteger(rawRpe) ? rawRpe : undefined;
 
     if (!Number.isFinite(parsedWeight) || parsedWeight < 0) {
-      setErrorMessage("Weight harus berupa angka >= 0.");
+      setErrorMessage("Weight must be a number greater than or equal to 0.");
       return;
     }
 
     if (!Number.isInteger(parsedReps) || parsedReps < 0) {
-      setErrorMessage("Reps harus berupa angka bulat >= 0.");
+      setErrorMessage("Reps must be a whole number greater than or equal to 0.");
       return;
     }
 
@@ -255,7 +255,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       draftRpe.trim() &&
       (parsedRpe === undefined || parsedRpe < 1 || parsedRpe > 10)
     ) {
-      setErrorMessage("RPE opsional, tapi jika diisi harus 1-10.");
+      setErrorMessage("RPE is optional, but if provided it must be between 1 and 10.");
       return;
     }
 
@@ -273,7 +273,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
           unit: draftUnit,
         });
         setEditingSetId(null);
-        setFeedbackMessage("Set berhasil diupdate.");
+        setFeedbackMessage("Set updated.");
       } else {
         await workoutService.addSet({
           workoutExerciseId: selectedExercise.id,
@@ -282,14 +282,16 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
           rpe: parsedRpe,
           unit: draftUnit,
         });
-        setFeedbackMessage("Set tersimpan.");
+        setFeedbackMessage("Set saved.");
 
         if (autoStartRestTimer && selectedExercise.restTimeSeconds > 0) {
+          const endsAt = Date.now() + selectedExercise.restTimeSeconds * 1000;
           router.push(
             {
               pathname: "/modal/rest-timer",
               params: {
                 seconds: String(selectedExercise.restTimeSeconds),
+                endsAt: String(endsAt),
                 exerciseName: selectedExercise.displayName,
               },
             } as never,
@@ -299,7 +301,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
 
       await refreshWorkout(true);
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menyimpan set.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to save set.");
     } finally {
       setIsMutating(false);
     }
@@ -323,9 +325,9 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
         setEditingSetId(null);
       }
       await refreshWorkout(true);
-      setFeedbackMessage("Set dihapus.");
+      setFeedbackMessage("Set deleted.");
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menghapus set.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to delete set.");
     } finally {
       setIsMutating(false);
     }
@@ -343,7 +345,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       await workoutService.finishWorkout(workoutId);
       router.replace({ pathname: "/workout/summary", params: { workoutId } } as never);
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menyelesaikan workout.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to finish workout.");
       setIsMutating(false);
     }
   };
@@ -356,7 +358,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     return (
       <View style={styles.centerState}>
         <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
-        <Text style={styles.stateText}>Memuat workout...</Text>
+        <Text style={styles.stateText}>Loading workout...</Text>
       </View>
     );
   }
@@ -364,7 +366,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   if (!workout || !selectedExercise) {
     return (
       <View style={styles.centerState}>
-        <Text style={styles.errorText}>{errorMessage ?? "Workout tidak tersedia."}</Text>
+        <Text style={styles.errorText}>{errorMessage ?? "Workout unavailable."}</Text>
         <PrimaryButton
           label="Back To Home"
           onPress={() => {
@@ -600,7 +602,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
         <View style={styles.loggedSection}>
           <Text style={styles.sectionLabel}>Logged Sets</Text>
           {selectedExercise.sets.length === 0 ? (
-            <Text style={styles.mutedText}>Belum ada set untuk exercise ini.</Text>
+            <Text style={styles.mutedText}>No sets logged for this exercise yet.</Text>
           ) : (
             <View style={styles.setList}>
               {selectedExercise.sets.map((setItem) => (

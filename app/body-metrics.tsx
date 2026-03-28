@@ -47,7 +47,7 @@ export default function BodyMetricsScreen() {
       .catch((error: unknown) => {
         if (isActive) {
           setErrorMessage(
-            error instanceof Error ? error.message : "Gagal memuat body metrics.",
+            error instanceof Error ? error.message : "Failed to load body metrics.",
           );
         }
       })
@@ -81,7 +81,7 @@ export default function BodyMetricsScreen() {
       : undefined;
 
     if (!Number.isFinite(parsedWeight) || parsedWeight <= 0) {
-      setErrorMessage("Weight wajib diisi dengan angka > 0.");
+      setErrorMessage("Weight must be a number greater than 0.");
       return;
     }
 
@@ -94,7 +94,7 @@ export default function BodyMetricsScreen() {
         parsedBodyFat > 100
       )
     ) {
-      setErrorMessage("Body fat jika diisi harus berada di rentang 0-100.");
+      setErrorMessage("Body fat must stay within the 0-100 range.");
       return;
     }
 
@@ -109,11 +109,11 @@ export default function BodyMetricsScreen() {
       });
       setWeightInput("");
       setBodyFatInput("");
-      setSuccessMessage("Body metric tersimpan.");
+      setSuccessMessage("Body metric saved.");
       const items = await bodyMetricsService.listMetrics(60);
       setHistory(items);
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menyimpan body metric.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to save body metric.");
     } finally {
       setIsSaving(false);
     }
@@ -142,8 +142,8 @@ export default function BodyMetricsScreen() {
           </Text>
           <Text style={styles.headerSub}>
             {weightDelta === null
-              ? "Belum ada pembanding sebelumnya"
-              : `${weightDelta >= 0 ? "+" : ""}${formatMetric(weightDelta)} ${preferredUnit.toUpperCase()} dari entry sebelumnya`}
+              ? "No previous check-in yet"
+              : `${weightDelta >= 0 ? "+" : ""}${formatMetric(weightDelta)} ${preferredUnit.toUpperCase()} vs the previous entry`}
           </Text>
           <Text style={styles.headerBodyFat}>
             BODY FAT:{" "}
@@ -203,7 +203,7 @@ export default function BodyMetricsScreen() {
               <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
             </View>
           ) : history.length === 0 ? (
-            <Text style={styles.emptyText}>Belum ada body metric yang tersimpan.</Text>
+            <Text style={styles.emptyText}>No body metrics logged yet.</Text>
           ) : (
             <View style={styles.historyList}>
               {history.map((entry) => (

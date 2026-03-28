@@ -14,7 +14,7 @@ export default function WorkoutActiveRoute() {
   if (!workoutId) {
     return (
       <View style={styles.stateContainer}>
-        <Text style={styles.errorText}>Workout ID tidak valid.</Text>
+        <Text style={styles.errorText}>Invalid workout ID.</Text>
         <Pressable
           style={styles.backButton}
           onPress={() => {

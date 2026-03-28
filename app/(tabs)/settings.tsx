@@ -56,7 +56,7 @@ export default function SettingsScreen() {
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : "Gagal memuat app settings.",
+              : "Failed to load app settings.",
           );
         }
       })
@@ -96,9 +96,9 @@ export default function SettingsScreen() {
         await analyticsService.rebuildExerciseStats();
       }
 
-      setSuccessMessage("Settings tersimpan.");
+      setSuccessMessage("Settings saved.");
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menyimpan settings.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to save settings.");
     } finally {
       setIsBusy(false);
     }
@@ -112,9 +112,9 @@ export default function SettingsScreen() {
     try {
       const result = await backupService.exportJsonBackup();
       await backupService.shareFile(result.fileUri);
-      setSuccessMessage(`Backup JSON berhasil dibuat: ${result.fileName}`);
+      setSuccessMessage(`JSON backup created: ${result.fileName}`);
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Export JSON gagal.");
+      setErrorMessage(error instanceof Error ? error.message : "JSON export failed.");
     } finally {
       setIsBusy(false);
     }
@@ -128,9 +128,9 @@ export default function SettingsScreen() {
     try {
       const result = await backupService.exportCsvAnalytics();
       await backupService.shareFile(result.fileUri);
-      setSuccessMessage(`Export CSV berhasil dibuat: ${result.fileName}`);
+      setSuccessMessage(`CSV export created: ${result.fileName}`);
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Export CSV gagal.");
+      setErrorMessage(error instanceof Error ? error.message : "CSV export failed.");
     } finally {
       setIsBusy(false);
     }
@@ -152,7 +152,7 @@ export default function SettingsScreen() {
         sourceName: parsed.sourceName,
       });
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Import JSON gagal.");
+      setErrorMessage(error instanceof Error ? error.message : "JSON import failed.");
     } finally {
       setIsBusy(false);
     }
@@ -172,9 +172,9 @@ export default function SettingsScreen() {
       setOneRmFormula(settings.oneRmFormula);
       setHapticsEnabled(settings.hapticsEnabled);
       setAutoStartRestTimer(settings.autoStartRestTimer);
-      setSuccessMessage("Restore backup berhasil. Seluruh data lokal sudah diperbarui.");
+      setSuccessMessage("Backup restored. Local data has been replaced.");
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Restore gagal.");
+      setErrorMessage(error instanceof Error ? error.message : "Restore failed.");
     } finally {
       setIsBusy(false);
     }
@@ -262,7 +262,7 @@ export default function SettingsScreen() {
 
         <ToggleRow
           title="Auto-start rest timer"
-          subtitle="Trigger setelah set tersimpan"
+          subtitle="Launch after a set is saved"
           value={autoStartRestTimer}
           onChange={(value) => {
             void onUpdateSettings({ autoStartRestTimer: value });
@@ -275,21 +275,21 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Data & Backup</Text>
         <ActionButton
           label="Export JSON Backup"
-          description="Full backup lokal seluruh data app"
+          description="Full backup of all app data"
           onPress={() => {
             void onExportJson();
           }}
         />
         <ActionButton
           label="Export CSV"
-          description="Set history untuk analisis spreadsheet"
+          description="Set history for spreadsheet analysis"
           onPress={() => {
             void onExportCsv();
           }}
         />
         <ActionButton
           label="Import JSON Backup"
-          description="Restore akan mengganti seluruh data lokal"
+          description="Restore will replace all local data"
           danger
           onPress={() => {
             void onImportJson();
@@ -298,7 +298,7 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.aboutText}>{APP_NAME} local-only MVP</Text>
+        <Text style={styles.aboutText}>{APP_NAME} mobile strength log</Text>
       </View>
 
       {isBusy ? <Text style={styles.infoText}>Processing...</Text> : null}

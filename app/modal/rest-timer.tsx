@@ -1,9 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { themeTokens } from "../../src/core/theme";
+import {
+  cancelRestTimerNotification,
+  playRestTimerCompletionHaptic,
+  scheduleRestTimerCompletionNotification,
+} from "../../src/services/notifications";
+import { appSettingsService } from "../../src/services/settings";
 
 export default function RestTimerModalScreen() {
   const router = useRouter();
@@ -11,35 +17,108 @@ export default function RestTimerModalScreen() {
   const params = useLocalSearchParams<{
     seconds?: string | string[];
     exerciseName?: string | string[];
+    endsAt?: string | string[];
   }>();
   const initialSeconds = Number.parseInt(asFirstString(params.seconds) ?? "90", 10);
   const exerciseName = asFirstString(params.exerciseName) ?? "Next Exercise";
-  const [remainingSeconds, setRemainingSeconds] = useState(
-    Number.isNaN(initialSeconds) ? 90 : Math.max(0, initialSeconds),
+  const initialEndsAt = Number.parseInt(
+    asFirstString(params.endsAt) ?? String(Date.now() + resolveInitialSeconds(initialSeconds) * 1000),
+    10,
   );
+  const [endsAtTimestamp, setEndsAtTimestamp] = useState(
+    Number.isNaN(initialEndsAt)
+      ? Date.now() + resolveInitialSeconds(initialSeconds) * 1000
+      : initialEndsAt,
+  );
+  const [nowTimestamp, setNowTimestamp] = useState(Date.now());
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const scheduledNotificationIdRef = useRef<string | null>(null);
+  const didFireCompletionRef = useRef(false);
 
   useEffect(() => {
-    if (remainingSeconds <= 0) {
-      router.back();
-      return;
-    }
-
     const intervalId = setInterval(() => {
-      setRemainingSeconds((previous) => {
-        if (previous <= 1) {
-          return 0;
-        }
-
-        return previous - 1;
-      });
-    }, 1000);
+      setNowTimestamp(Date.now());
+    }, 250);
 
     return () => {
       clearInterval(intervalId);
     };
-  }, [remainingSeconds, router]);
+  }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    appSettingsService
+      .get()
+      .then((settings) => {
+        if (isActive) {
+          setHapticsEnabled(settings.hapticsEnabled);
+        }
+      })
+      .catch((error) => {
+        console.warn("[rest-timer] failed to read app settings", error);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const syncNotification = async () => {
+      await cancelRestTimerNotification(scheduledNotificationIdRef.current);
+      scheduledNotificationIdRef.current = null;
+
+      if (endsAtTimestamp <= Date.now()) {
+        return;
+      }
+
+      const notificationId = await scheduleRestTimerCompletionNotification({
+        endsAt: endsAtTimestamp,
+        exerciseName,
+      });
+
+      if (!isActive) {
+        await cancelRestTimerNotification(notificationId);
+        return;
+      }
+
+      scheduledNotificationIdRef.current = notificationId;
+    };
+
+    void syncNotification();
+
+    return () => {
+      isActive = false;
+      void cancelRestTimerNotification(scheduledNotificationIdRef.current);
+      scheduledNotificationIdRef.current = null;
+    };
+  }, [endsAtTimestamp, exerciseName]);
+
+  const remainingSeconds = useMemo(
+    () => Math.max(0, Math.ceil((endsAtTimestamp - nowTimestamp) / 1000)),
+    [endsAtTimestamp, nowTimestamp],
+  );
   const countdownLabel = useMemo(() => formatDuration(remainingSeconds), [remainingSeconds]);
+  const isComplete = remainingSeconds <= 0;
+
+  useEffect(() => {
+    if (remainingSeconds > 0) {
+      didFireCompletionRef.current = false;
+      return;
+    }
+
+    if (didFireCompletionRef.current) {
+      return;
+    }
+
+    didFireCompletionRef.current = true;
+    void cancelRestTimerNotification(scheduledNotificationIdRef.current);
+    scheduledNotificationIdRef.current = null;
+    void playRestTimerCompletionHaptic(hapticsEnabled);
+  }, [hapticsEnabled, remainingSeconds]);
 
   return (
     <View
@@ -52,18 +131,26 @@ export default function RestTimerModalScreen() {
       ]}
     >
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Recovery Phase</Text>
+        <Text style={styles.eyebrow}>{isComplete ? "Ready to Lift" : "Recovery Phase"}</Text>
         <Text style={styles.exerciseName}>{exerciseName.toUpperCase()}</Text>
       </View>
 
       <View style={styles.countdownWrap}>
-        <Text style={styles.countdownLabel}>{countdownLabel}</Text>
-        <Text style={styles.subLabel}>RESTING</Text>
+        <Text style={styles.countdownLabel}>{isComplete ? "GO" : countdownLabel}</Text>
+        <Text style={styles.subLabel}>{isComplete ? "REST COMPLETE" : "RESTING"}</Text>
+        <Text style={styles.helperLabel}>
+          {isComplete
+            ? "Your next set is ready."
+            : "The timer stays accurate even if you leave the app."}
+        </Text>
       </View>
 
       <View style={styles.actionRow}>
         <Pressable
-          onPress={() => setRemainingSeconds((previous) => previous + 15)}
+          onPress={() => {
+            didFireCompletionRef.current = false;
+            setEndsAtTimestamp((previous) => Math.max(previous, Date.now()) + 15 * 1000);
+          }}
           style={({ pressed }) => [styles.secondaryButton, pressed ? styles.pressed : null]}
         >
           <Text style={styles.secondaryLabel}>+15s</Text>
@@ -74,7 +161,7 @@ export default function RestTimerModalScreen() {
           }}
           style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressed : null]}
         >
-          <Text style={styles.primaryLabel}>Skip</Text>
+          <Text style={styles.primaryLabel}>{isComplete ? "Back to Workout" : "Skip Rest"}</Text>
         </Pressable>
       </View>
     </View>
@@ -94,6 +181,14 @@ function formatDuration(totalSeconds: number): string {
   const minutes = Math.floor(safeSeconds / 60);
   const seconds = safeSeconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function resolveInitialSeconds(initialSeconds: number): number {
+  if (Number.isNaN(initialSeconds)) {
+    return 90;
+  }
+
+  return Math.max(0, initialSeconds);
 }
 
 const styles = StyleSheet.create({
@@ -139,6 +234,12 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 2.4,
   },
+  helperLabel: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+  },
   actionRow: {
     flexDirection: "row",
     gap: themeTokens.spacing.sm,
@@ -172,5 +273,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     textTransform: "uppercase",
+    textAlign: "center",
   },
 });

@@ -32,7 +32,7 @@ export default function ExerciseProgressScreen() {
   const loadDetail = useCallback(() => {
     if (!exerciseId) {
       setIsLoading(false);
-      setErrorMessage("Exercise ID tidak valid.");
+      setErrorMessage("Invalid exercise ID.");
       setDetail(null);
       return () => {};
     }
@@ -49,7 +49,7 @@ export default function ExerciseProgressScreen() {
         }
 
         if (!result) {
-          setErrorMessage("Data exercise tidak ditemukan.");
+          setErrorMessage("Exercise data not found.");
           setDetail(null);
           return;
         }
@@ -61,7 +61,7 @@ export default function ExerciseProgressScreen() {
           setErrorMessage(
             error instanceof Error
               ? error.message
-              : "Gagal memuat detail progress exercise.",
+              : "Failed to load exercise insights.",
           );
         }
       })
@@ -89,7 +89,7 @@ export default function ExerciseProgressScreen() {
   if (!detail) {
     return (
       <View style={styles.centerState}>
-        <Text style={styles.errorText}>{errorMessage ?? "Detail tidak tersedia."}</Text>
+        <Text style={styles.errorText}>{errorMessage ?? "Details unavailable."}</Text>
         <PrimaryButton
           label="Back To Progress"
           onPress={() => {
@@ -110,7 +110,7 @@ export default function ExerciseProgressScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.headerSection}>
-        <Text style={styles.headerEyebrow}>Exercise Progress</Text>
+        <Text style={styles.headerEyebrow}>Exercise Insights</Text>
         <Text style={styles.headerTitle}>{detail.exerciseName.toUpperCase()}</Text>
         <Text style={styles.headerMeta}>
           {detail.muscleGroup.toUpperCase()} • {detail.equipmentType.toUpperCase()}

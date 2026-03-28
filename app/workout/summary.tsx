@@ -14,7 +14,7 @@ export default function WorkoutSummaryRoute() {
   if (!workoutId) {
     return (
       <View style={styles.stateContainer}>
-        <Text style={styles.errorText}>Workout ID tidak tersedia.</Text>
+        <Text style={styles.errorText}>Workout ID is missing.</Text>
         <Pressable
           style={styles.backButton}
           onPress={() => {

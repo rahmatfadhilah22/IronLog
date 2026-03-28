@@ -22,7 +22,7 @@ export default function RoutineDetailScreen() {
         }}
       >
         <Text style={{ color: themeTokens.colors.danger, fontWeight: "700" }}>
-          Routine ID tidak valid.
+          Invalid routine ID.
         </Text>
       </View>
     );

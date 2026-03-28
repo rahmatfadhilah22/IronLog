@@ -39,7 +39,7 @@ export default function ProgressScreen() {
       .catch((error: unknown) => {
         if (isActive) {
           setErrorMessage(
-            error instanceof Error ? error.message : "Gagal memuat data progress.",
+            error instanceof Error ? error.message : "Failed to load progress data.",
           );
         }
       })
@@ -81,8 +81,8 @@ export default function ProgressScreen() {
         </View>
       ) : !overview || overview.exercises.length === 0 ? (
         <EmptyState
-          title="Belum Ada Data Progress"
-          description="Selesaikan workout terlebih dulu agar analytics exercise muncul."
+          title="No Progress Yet"
+          description="Finish a workout first to unlock exercise insights."
           actionLabel="Go To Routines"
           onPress={() => {
             router.push("/routines");

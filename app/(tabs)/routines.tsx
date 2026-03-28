@@ -31,7 +31,7 @@ export default function RoutinesScreen() {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : "Gagal memuat routine.",
+              : "Failed to load routines.",
           );
         }
       })
@@ -75,8 +75,8 @@ export default function RoutinesScreen() {
         </View>
       ) : routines.length === 0 ? (
         <EmptyState
-          title="Belum Ada Routine"
-          description="Buat routine pertama Anda untuk mulai menyusun latihan."
+          title="No Routines Yet"
+          description="Create your first routine and start building your training split."
           actionLabel="Create Routine"
           onPress={goToCreate}
         />

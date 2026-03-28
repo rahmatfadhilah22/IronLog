@@ -52,7 +52,7 @@ export default function HomeScreen() {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : "Gagal memuat data Home.",
+              : "Failed to load home data.",
           );
         }
       })
@@ -88,10 +88,10 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.heroPanel}>
-        <Text style={styles.heroEyebrow}>IronLog Local</Text>
-        <Text style={styles.heroTitle}>Train Fast, Log Local</Text>
+        <Text style={styles.heroEyebrow}>Focused Training Log</Text>
+        <Text style={styles.heroTitle}>Lift Hard. Log Fast.</Text>
         <Text style={styles.heroDescription}>
-          Semua data tetap di device. Mulai dan lanjutkan workout langsung dari routine.
+          Build routines, run sessions, and review progress from one fast training log.
         </Text>
         {activeWorkout ? (
           <View style={styles.activeWorkoutPanel}>
@@ -160,7 +160,7 @@ export default function HomeScreen() {
         {recentRoutines.length === 0 ? (
           <EmptyState
             title="No Routine Yet"
-            description="Buat routine pertama untuk memulai program latihan Anda."
+            description="Create your first routine to start training with structure."
             actionLabel="Create Routine"
             onPress={() => {
               router.push("/routines/create");

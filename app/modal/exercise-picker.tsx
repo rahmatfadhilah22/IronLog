@@ -111,7 +111,7 @@ export default function ExercisePickerScreen() {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : "Gagal memuat daftar exercise.",
+              : "Failed to load exercises.",
           );
         }
       })
@@ -176,17 +176,17 @@ export default function ExercisePickerScreen() {
     const nextEquipmentType = collapseWhitespace(customEquipmentType);
 
     if (!nextName) {
-      setError("Nama exercise wajib diisi.");
+      setError("Exercise name is required.");
       return;
     }
 
     if (!nextMuscleGroup) {
-      setError("Muscle group wajib diisi.");
+      setError("Select a muscle group.");
       return;
     }
 
     if (!nextEquipmentType) {
-      setError("Equipment type wajib diisi.");
+      setError("Select an equipment type.");
       return;
     }
 
@@ -209,7 +209,7 @@ export default function ExercisePickerScreen() {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Gagal membuat custom exercise.",
+          : "Failed to create a custom exercise.",
       );
     } finally {
       setIsCreatingCustom(false);
@@ -266,7 +266,7 @@ export default function ExercisePickerScreen() {
           <View style={styles.createCard}>
             <Text style={styles.createTitle}>Custom Exercise</Text>
             <Text style={styles.createSubtitle}>
-              Buat exercise baru lalu langsung tambahkan ke routine atau workout.
+              Create a new exercise and add it straight into your routine or workout.
             </Text>
 
             <TextInput
@@ -361,7 +361,7 @@ export default function ExercisePickerScreen() {
               <View style={styles.centerState}>
                 <Text style={styles.emptyTitle}>No Exercise Found</Text>
                 <Text style={styles.emptyText}>
-                  Coba ubah kata kunci, filter, atau buat custom exercise.
+                  Try a different keyword, switch the filter, or create a custom exercise.
                 </Text>
               </View>
             ) : (

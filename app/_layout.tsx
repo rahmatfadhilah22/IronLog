@@ -1,13 +1,19 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { APP_NAME } from "../src/core/constants";
 import { themeTokens } from "../src/core/theme";
 import { useDatabaseBootstrap } from "../src/db/sqlite";
+import { initializeRestTimerNotifications } from "../src/services/notifications";
 
 export default function RootLayout() {
   const { isReady, error, retry } = useDatabaseBootstrap();
+
+  useEffect(() => {
+    initializeRestTimerNotifications();
+  }, []);
 
   if (error) {
     return (
@@ -48,7 +54,7 @@ export default function RootLayout() {
         <Stack.Screen name="routines/[routineId]" options={{ title: "Routine Detail" }} />
         <Stack.Screen name="workout/[workoutId]" options={{ title: "Active Workout" }} />
         <Stack.Screen name="workout/summary" options={{ title: "Workout Summary" }} />
-        <Stack.Screen name="exercise/[exerciseId]" options={{ title: "Exercise Progress" }} />
+        <Stack.Screen name="exercise/[exerciseId]" options={{ title: "Exercise Insights" }} />
         <Stack.Screen name="body-metrics" options={{ title: "Body Metrics" }} />
         <Stack.Screen
           name="modal/exercise-picker"

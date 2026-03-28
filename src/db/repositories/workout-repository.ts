@@ -214,7 +214,7 @@ export async function startWorkoutFromRoutine(
   );
 
   if (!routine || routine.is_archived === 1) {
-    throw new Error("Routine tidak ditemukan atau sudah diarsipkan.");
+    throw new Error("Routine was not found or is already archived.");
   }
 
   const snapshots = await db.getAllAsync<RoutineExerciseSnapshotRow>(
@@ -427,11 +427,11 @@ export async function addWorkoutSet(
     ) as WorkoutExerciseMetaRow | null;
 
     if (!workoutExercise) {
-      throw new Error("Exercise workout tidak ditemukan.");
+      throw new Error("Workout exercise not found.");
     }
 
     if (workoutExercise.workout_status !== "active") {
-      throw new Error("Workout sudah selesai dan tidak bisa diubah.");
+      throw new Error("This workout is already finished and can no longer be changed.");
     }
 
     const nextSetRow = await db.getFirstAsync<NextSetNumberRow>(
@@ -509,11 +509,11 @@ export async function updateWorkoutSet(
     );
 
     if (!meta) {
-      throw new Error("Set tidak ditemukan.");
+      throw new Error("Set not found.");
     }
 
     if (meta.workout_status !== "active") {
-      throw new Error("Workout sudah selesai dan tidak bisa diubah.");
+      throw new Error("This workout is already finished and can no longer be changed.");
     }
 
     await db.runAsync(
@@ -565,7 +565,7 @@ export async function deleteWorkoutSet(
     }
 
     if (meta.workout_status !== "active") {
-      throw new Error("Workout sudah selesai dan tidak bisa diubah.");
+      throw new Error("This workout is already finished and can no longer be changed.");
     }
 
     await db.runAsync("DELETE FROM workout_sets WHERE id = ?", workoutSetId);
@@ -603,11 +603,11 @@ export async function addWorkoutExerciseBlock(
     );
 
     if (!workoutStatus) {
-      throw new Error("Workout tidak ditemukan.");
+      throw new Error("Workout not found.");
     }
 
     if (workoutStatus.status !== "active") {
-      throw new Error("Workout sudah selesai dan tidak bisa diubah.");
+      throw new Error("This workout is already finished and can no longer be changed.");
     }
 
     const exercise = await db.getFirstAsync<ExerciseRow>(
@@ -616,7 +616,7 @@ export async function addWorkoutExerciseBlock(
     );
 
     if (!exercise) {
-      throw new Error("Exercise tidak ditemukan.");
+      throw new Error("Exercise not found.");
     }
 
     const maxSort = await db.getFirstAsync<MaxSortOrderRow>(
@@ -678,7 +678,7 @@ export async function finishWorkout(
   );
 
   if (!workoutStatus) {
-    throw new Error("Workout tidak ditemukan.");
+    throw new Error("Workout not found.");
   }
 
   if (workoutStatus.status !== "active") {

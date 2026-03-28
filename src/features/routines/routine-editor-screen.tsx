@@ -66,7 +66,7 @@ export function RoutineEditorScreen({
         }
 
         if (!routine || routine.isArchived) {
-          setErrorMessage("Routine tidak ditemukan.");
+          setErrorMessage("Routine not found.");
           return;
         }
 
@@ -77,7 +77,7 @@ export function RoutineEditorScreen({
       .catch((error: unknown) => {
         if (isActive) {
           setErrorMessage(
-            error instanceof Error ? error.message : "Gagal memuat routine.",
+            error instanceof Error ? error.message : "Failed to load routine.",
           );
         }
       })
@@ -161,7 +161,7 @@ export function RoutineEditorScreen({
       })
       .catch((error: unknown) => {
         setErrorMessage(
-          error instanceof Error ? error.message : "Gagal menambah exercise.",
+          error instanceof Error ? error.message : "Failed to add exercise.",
         );
       });
   }, [clearPicked, picked, pickerRequestKey]);
@@ -246,12 +246,12 @@ export function RoutineEditorScreen({
 
     const trimmedName = name.trim();
     if (!trimmedName) {
-      setErrorMessage("Nama routine wajib diisi.");
+      setErrorMessage("Routine name is required.");
       return;
     }
 
     if (exercises.length === 0) {
-      setErrorMessage("Routine minimal harus punya 1 exercise.");
+      setErrorMessage("Add at least 1 exercise before saving.");
       return;
     }
 
@@ -274,13 +274,13 @@ export function RoutineEditorScreen({
       }
 
       if (!routineId) {
-        throw new Error("Routine ID tidak tersedia.");
+        throw new Error("Routine ID is missing.");
       }
 
       await routineService.updateRoutine(routineId, payload);
-      setSuccessMessage("Routine tersimpan.");
+      setSuccessMessage("Routine saved.");
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal menyimpan.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to save routine.");
     } finally {
       setIsSaving(false);
     }
@@ -303,12 +303,12 @@ export function RoutineEditorScreen({
     try {
       const result = await workoutService.startWorkoutFromRoutine(routineId);
       if (result.reusedActiveWorkout) {
-        setSuccessMessage("Workout aktif ditemukan. Melanjutkan sesi yang ada.");
+        setSuccessMessage("An active workout was found. Reopening the current session.");
       }
       router.push(`/workout/${result.workoutId}` as never);
     } catch (error: unknown) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Gagal memulai workout.",
+        error instanceof Error ? error.message : "Failed to start workout.",
       );
     } finally {
       setIsStartingWorkout(false);
@@ -319,7 +319,7 @@ export function RoutineEditorScreen({
     return (
       <View style={styles.centerState}>
         <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
-        <Text style={styles.stateText}>Memuat routine...</Text>
+        <Text style={styles.stateText}>Loading routine...</Text>
       </View>
     );
   }
@@ -359,7 +359,7 @@ export function RoutineEditorScreen({
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Contoh: PUSH DAY A"
+            placeholder="Example: Push Day A"
             placeholderTextColor={themeTokens.colors.textSecondary}
             style={styles.nameInput}
             autoCapitalize="words"
@@ -374,7 +374,7 @@ export function RoutineEditorScreen({
           <TextInput
             value={description}
             onChangeText={setDescription}
-            placeholder="Opsional"
+            placeholder="Optional"
             placeholderTextColor={themeTokens.colors.textSecondary}
             style={styles.descriptionInput}
             multiline

@@ -230,7 +230,7 @@ export async function createCustomExercise(
   );
 
   if (duplicate) {
-    throw new Error("Exercise dengan nama yang sama sudah ada.");
+    throw new Error("An exercise with the same name already exists.");
   }
 
   const exerciseId = createId();
