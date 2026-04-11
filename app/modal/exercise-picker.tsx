@@ -48,11 +48,15 @@ export default function ExercisePickerScreen() {
   const params = useLocalSearchParams<{
     requestKey?: string | string[];
     excludeIds?: string | string[];
+    selectionMode?: string | string[];
   }>();
 
   const requestKey = asFirstString(params.requestKey);
   const excludeIdsParam = asFirstString(params.excludeIds) ?? "";
+  const selectionMode =
+    asFirstString(params.selectionMode) === "multiple" ? "multiple" : "single";
   const pickExercise = useExercisePickerStore((state) => state.pickExercise);
+  const submitExercises = useExercisePickerStore((state) => state.submitExercises);
 
   const [search, setSearch] = useState("");
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>("ALL");
@@ -66,6 +70,7 @@ export default function ExercisePickerScreen() {
   const [customName, setCustomName] = useState("");
   const [customMuscleGroup, setCustomMuscleGroup] = useState("");
   const [customEquipmentType, setCustomEquipmentType] = useState("");
+  const [selectedExerciseIds, setSelectedExerciseIds] = useState<string[]>([]);
 
   const excludeIds = useMemo(() => {
     if (!excludeIdsParam.trim()) {
@@ -158,10 +163,33 @@ export default function ExercisePickerScreen() {
   ]);
 
   const onSelectExercise = (exerciseId: string) => {
+    if (!requestKey) {
+      router.back();
+      return;
+    }
+
+    if (selectionMode === "multiple") {
+      setSelectedExerciseIds((current) =>
+        current.includes(exerciseId)
+          ? current.filter((item) => item !== exerciseId)
+          : [...current, exerciseId],
+      );
+      return;
+    }
+
     if (requestKey) {
       pickExercise(requestKey, exerciseId);
     }
 
+    router.back();
+  };
+
+  const onSubmitSelectedExercises = () => {
+    if (!requestKey || selectedExerciseIds.length === 0) {
+      return;
+    }
+
+    submitExercises(requestKey, selectedExerciseIds);
     router.back();
   };
 
@@ -201,7 +229,11 @@ export default function ExercisePickerScreen() {
       });
 
       if (requestKey) {
-        pickExercise(requestKey, created.id);
+        if (selectionMode === "multiple") {
+          submitExercises(requestKey, [created.id]);
+        } else {
+          pickExercise(requestKey, created.id);
+        }
       }
 
       router.back();
@@ -255,6 +287,35 @@ export default function ExercisePickerScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {selectionMode === "multiple" && !showCreateForm ? (
+          <View style={styles.selectionSummary}>
+            <Text style={styles.selectionSummaryText}>
+              {selectedExerciseIds.length === 0
+                ? "Tap exercises to select them for this routine."
+                : `${selectedExerciseIds.length} selected`}
+            </Text>
+            <Pressable
+              onPress={onSubmitSelectedExercises}
+              disabled={selectedExerciseIds.length === 0}
+              style={[
+                styles.selectionSubmitButton,
+                selectedExerciseIds.length === 0 ? styles.selectionSubmitButtonDisabled : null,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.selectionSubmitLabel,
+                  selectedExerciseIds.length === 0 ? styles.selectionSubmitLabelDisabled : null,
+                ]}
+              >
+                {selectedExerciseIds.length === 0
+                  ? "Select Exercises"
+                  : `Add ${selectedExerciseIds.length} Exercise${selectedExerciseIds.length > 1 ? "s" : ""}`}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         {error ? (
           <View style={styles.inlineMessage}>
@@ -379,6 +440,9 @@ export default function ExercisePickerScreen() {
                     }}
                     style={({ pressed }) => [
                       styles.exerciseRow,
+                      selectedExerciseIds.includes(exercise.id)
+                        ? styles.exerciseRowSelected
+                        : null,
                       pressed ? styles.exerciseRowPressed : null,
                     ]}
                   >
@@ -396,7 +460,13 @@ export default function ExercisePickerScreen() {
                         {exercise.equipmentType.toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={styles.pickLabel}>ADD</Text>
+                    <Text style={styles.pickLabel}>
+                      {selectionMode === "multiple"
+                        ? selectedExerciseIds.includes(exercise.id)
+                          ? "SELECTED"
+                          : "SELECT"
+                        : "ADD"}
+                    </Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -515,6 +585,38 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: "row",
+  },
+  selectionSummary: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
+  },
+  selectionSummaryText: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  selectionSubmitButton: {
+    minHeight: 48,
+    borderRadius: themeTokens.radius.sm,
+    backgroundColor: themeTokens.colors.accentPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: themeTokens.spacing.md,
+  },
+  selectionSubmitButtonDisabled: {
+    backgroundColor: themeTokens.colors.surfaceHighest,
+  },
+  selectionSubmitLabel: {
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
+  },
+  selectionSubmitLabelDisabled: {
+    color: themeTokens.colors.textSecondary,
   },
   actionButton: {
     backgroundColor: themeTokens.colors.surfaceHighest,
@@ -691,6 +793,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: themeTokens.spacing.md,
+  },
+  exerciseRowSelected: {
+    backgroundColor: themeTokens.colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: themeTokens.colors.accentPrimary,
   },
   exerciseRowPressed: {
     backgroundColor: themeTokens.colors.surfaceHigh,

@@ -134,29 +134,29 @@ export function RoutineEditorScreen({
     clearPicked();
     setErrorMessage(null);
 
-    routineService
-      .getExerciseById(picked.exerciseId)
-      .then((exercise) => {
-        if (!exercise) {
-          return;
-        }
-
+    Promise.all(
+      picked.exerciseIds.map((exerciseId) => routineService.getExerciseById(exerciseId)),
+    )
+      .then((fetchedExercises) => {
         setExercises((previous) => {
-          if (previous.some((item) => item.exerciseId === exercise.id)) {
-            return previous;
-          }
-
-          return [
-            ...previous,
-            {
+          const existingIds = new Set(previous.map((item) => item.exerciseId));
+          const additions = fetchedExercises
+            .filter((exercise): exercise is NonNullable<typeof exercise> => exercise !== null)
+            .filter((exercise) => !existingIds.has(exercise.id))
+            .map((exercise) => ({
               localId: createId(),
               exerciseId: exercise.id,
               name: exercise.name,
               muscleGroup: exercise.muscleGroup,
               equipmentType: exercise.equipmentType,
               restTimeSeconds: 90,
-            },
-          ];
+            }));
+
+          if (additions.length === 0) {
+            return previous;
+          }
+
+          return [...previous, ...additions];
         });
       })
       .catch((error: unknown) => {
@@ -198,6 +198,7 @@ export function RoutineEditorScreen({
         params: {
           requestKey,
           excludeIds,
+          selectionMode: "multiple",
         },
       } as never,
     );

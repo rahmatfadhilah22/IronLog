@@ -149,7 +149,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     setIsMutating(true);
 
     workoutService
-      .addExerciseBlock(workout.id, picked.exerciseId)
+      .addExerciseBlock(workout.id, picked.exerciseIds[0] ?? "")
       .then(async () => {
         await refreshWorkout(true);
         setFeedbackMessage("Exercise block added.");
@@ -211,7 +211,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     beginRequest(requestKey);
     router.push({
       pathname: "/modal/exercise-picker",
-      params: { requestKey },
+      params: { requestKey, selectionMode: "single" },
     } as never);
   };
 

@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 type ExercisePickerSelection = {
   requestKey: string;
-  exerciseId: string;
+  exerciseIds: string[];
   pickedAt: string;
 };
 
@@ -11,6 +11,7 @@ type ExercisePickerStore = {
   picked: ExercisePickerSelection | null;
   beginRequest: (requestKey: string) => void;
   pickExercise: (requestKey: string, exerciseId: string) => void;
+  submitExercises: (requestKey: string, exerciseIds: string[]) => void;
   clearPicked: () => void;
 };
 
@@ -31,7 +32,20 @@ export const useExercisePickerStore = create<ExercisePickerStore>((set, get) => 
     set({
       picked: {
         requestKey,
-        exerciseId,
+        exerciseIds: [exerciseId],
+        pickedAt: String(Date.now()),
+      },
+    });
+  },
+  submitExercises: (requestKey, exerciseIds) => {
+    if (get().activeRequestKey !== requestKey || exerciseIds.length === 0) {
+      return;
+    }
+
+    set({
+      picked: {
+        requestKey,
+        exerciseIds,
         pickedAt: String(Date.now()),
       },
     });
