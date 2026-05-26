@@ -25,6 +25,8 @@ export type WorkoutExerciseDetail = {
   displayName: string;
   sortOrder: number;
   restTimeSeconds: number;
+  equipmentType?: string;
+  muscleGroup?: string;
   sets: WorkoutSet[];
   totalVolume: number;
 };

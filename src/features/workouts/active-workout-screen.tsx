@@ -18,7 +18,8 @@ import { themeTokens } from "../../core/theme";
 import { convertWeight, createId } from "../../core/utils";
 import { appSettingsService } from "../../services/settings";
 import { workoutService } from "../../services/workouts";
-import { useExercisePickerStore } from "../../stores";
+import { bodyMetricsService } from "../../services/body-metrics";
+import { useExercisePickerStore, useRestTimerStore } from "../../stores";
 import type { PreferredUnit } from "../../types/settings";
 import type { WorkoutDetail, WorkoutSet } from "../../types/workout";
 
@@ -29,6 +30,7 @@ type ActiveWorkoutScreenProps = {
 export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const restStore = useRestTimerStore();
   const [workout, setWorkout] = useState<WorkoutDetail | null>(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [preferredUnit, setPreferredUnit] = useState<PreferredUnit>("kg");
@@ -185,11 +187,22 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       return;
     }
 
-    setDraftWeight("");
+    if (selectedExercise.equipmentType === "Bodyweight") {
+      bodyMetricsService.getLatestMetric().then((metric) => {
+        if (metric) {
+          setDraftWeight(String(metric.weight));
+        } else {
+          setDraftWeight("0");
+        }
+      });
+    } else {
+      setDraftWeight("");
+    }
+
     setDraftReps("");
     setDraftRpe("");
     setDraftUnit(preferredUnit);
-  }, [editingSetId, preferredUnit, selectedExercise?.id]);
+  }, [editingSetId, preferredUnit, selectedExercise?.id, selectedExercise?.equipmentType, selectedExercise?.muscleGroup]);
 
   const elapsedLabel = useMemo(() => {
     if (!workout) {
@@ -242,12 +255,18 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     const parsedRpe = Number.isInteger(rawRpe) ? rawRpe : undefined;
 
     if (!Number.isFinite(parsedWeight) || parsedWeight < 0) {
-      setErrorMessage("Weight must be a number greater than or equal to 0.");
+      if (selectedExercise.equipmentType === "Bodyweight" && draftWeight.trim() === "") {
+        setErrorMessage("Please enter your bodyweight.");
+      } else {
+        const label = selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio" ? "Time" : "Weight";
+        setErrorMessage(`${label} must be a number greater than or equal to 0.`);
+      }
       return;
     }
 
     if (!Number.isInteger(parsedReps) || parsedReps < 0) {
-      setErrorMessage("Reps must be a whole number greater than or equal to 0.");
+      const label = selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio" ? "Distance" : "Reps";
+      setErrorMessage(`${label} must be a whole number greater than or equal to 0.`);
       return;
     }
 
@@ -377,8 +396,33 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     );
   }
 
+  const isResting = restStore.endsAtTimestamp && restStore.endsAtTimestamp > nowTimestamp;
+  const remainingRestSeconds = isResting
+    ? Math.max(0, Math.ceil((restStore.endsAtTimestamp! - nowTimestamp) / 1000))
+    : 0;
+
   return (
     <>
+      {isResting && (
+        <Pressable
+          style={styles.restBanner}
+          onPress={() => {
+            router.push({
+              pathname: "/modal/rest-timer",
+              params: {
+                seconds: String(restStore.initialSeconds),
+                endsAt: String(restStore.endsAtTimestamp),
+                exerciseName: restStore.exerciseName ?? "Next Exercise",
+              },
+            } as never);
+          }}
+        >
+          <Text style={styles.restBannerText}>
+            Resting: {formatDuration(remainingRestSeconds)}
+          </Text>
+          <Text style={styles.restBannerSubtext}>Tap to open timer</Text>
+        </Pressable>
+      )}
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -479,7 +523,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
             />
             <MetricPill
               label="VOLUME"
-              value={formatVolume(selectedExercise.sets, preferredUnit)}
+              value={formatVolume(selectedExercise.sets, preferredUnit, selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio")}
             />
           </View>
         </View>
@@ -504,7 +548,11 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
 
           <View style={styles.loggerGrid}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Weight</Text>
+              <Text style={styles.inputLabel}>
+                {selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio"
+                  ? "Time (Minutes)"
+                  : selectedExercise.equipmentType === "Bodyweight" ? "Weight (BW)" : "Weight"}
+              </Text>
               <TextInput
                 value={draftWeight}
                 onChangeText={setDraftWeight}
@@ -515,7 +563,11 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
               />
             </View>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Reps</Text>
+              <Text style={styles.inputLabel}>
+                {selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio"
+                  ? "Distance"
+                  : "Reps"}
+              </Text>
               <TextInput
                 value={draftReps}
                 onChangeText={setDraftReps}
@@ -733,7 +785,13 @@ function formatWeight(value: number): string {
   return value.toFixed(1);
 }
 
-function formatVolume(sets: WorkoutSet[], preferredUnit: PreferredUnit): string {
+function formatVolume(sets: WorkoutSet[], preferredUnit: PreferredUnit, isCardio?: boolean): string {
+  if (isCardio) {
+    const totalDistance = sets.reduce((sum, currentSet) => sum + currentSet.reps, 0);
+    const totalTime = sets.reduce((sum, currentSet) => sum + currentSet.weight, 0);
+    return `${Math.round(totalDistance)} / ${Math.round(totalTime)} min`;
+  }
+
   const totalVolume = sets.reduce((sum, currentSet) => {
     const convertedWeight = convertWeight(
       currentSet.weight,
@@ -753,13 +811,9 @@ function formatDuration(totalSeconds: number): string {
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
 
-  if (hours > 0) {
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(
-      seconds,
-    ).padStart(2, "0")}`;
-  }
-
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(
+    seconds,
+  ).padStart(2, "0")}`;
 }
 
 const styles = StyleSheet.create({
@@ -1168,5 +1222,23 @@ const styles = StyleSheet.create({
     color: themeTokens.colors.textSecondary,
     fontSize: 13,
     lineHeight: 18,
+  },
+  restBanner: {
+    backgroundColor: themeTokens.colors.accentPrimary,
+    padding: themeTokens.spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  restBannerText: {
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 14,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+  restBannerSubtext: {
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 11,
+    fontWeight: "600",
+    opacity: 0.8,
   },
 });

@@ -10,21 +10,31 @@ import {
   scheduleRestTimerCompletionNotification,
 } from "../../src/services/notifications";
 import { appSettingsService } from "../../src/services/settings";
+import { useRestTimerStore } from "../../src/stores";
 
 export default function RestTimerModalScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const store = useRestTimerStore();
   const params = useLocalSearchParams<{
     seconds?: string | string[];
     exerciseName?: string | string[];
     endsAt?: string | string[];
   }>();
-  const initialSeconds = Number.parseInt(asFirstString(params.seconds) ?? "90", 10);
-  const exerciseName = asFirstString(params.exerciseName) ?? "Next Exercise";
-  const initialEndsAt = Number.parseInt(
-    asFirstString(params.endsAt) ?? String(Date.now() + resolveInitialSeconds(initialSeconds) * 1000),
-    10,
-  );
+
+  // Prefer params (if passed via navigation), fallback to store, fallback to defaults
+  const parsedSeconds = asFirstString(params.seconds);
+  const initialSeconds = parsedSeconds
+    ? Number.parseInt(parsedSeconds, 10)
+    : store.initialSeconds ?? 90;
+
+  const exerciseName = asFirstString(params.exerciseName) ?? store.exerciseName ?? "Next Exercise";
+
+  const parsedEndsAt = asFirstString(params.endsAt);
+  const initialEndsAt = parsedEndsAt
+    ? Number.parseInt(parsedEndsAt, 10)
+    : store.endsAtTimestamp ?? Date.now() + resolveInitialSeconds(initialSeconds) * 1000;
+
   const [endsAtTimestamp, setEndsAtTimestamp] = useState(
     Number.isNaN(initialEndsAt)
       ? Date.now() + resolveInitialSeconds(initialSeconds) * 1000
@@ -34,6 +44,14 @@ export default function RestTimerModalScreen() {
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const scheduledNotificationIdRef = useRef<string | null>(null);
   const didFireCompletionRef = useRef(false);
+
+  // Sync state to store so banner can read it
+  useEffect(() => {
+    store.startTimer(endsAtTimestamp, exerciseName, initialSeconds);
+    return () => {
+      // We don't stop the timer on unmount because the banner might need it
+    };
+  }, [endsAtTimestamp, exerciseName, initialSeconds]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -118,7 +136,15 @@ export default function RestTimerModalScreen() {
     void cancelRestTimerNotification(scheduledNotificationIdRef.current);
     scheduledNotificationIdRef.current = null;
     void playRestTimerCompletionHaptic(hapticsEnabled);
-  }, [hapticsEnabled, remainingSeconds]);
+
+    // Automatically close modal after a short delay so user can get back to workout
+    const timer = setTimeout(() => {
+      store.stopTimer();
+      router.back();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [hapticsEnabled, remainingSeconds, router, store]);
 
   return (
     <View
