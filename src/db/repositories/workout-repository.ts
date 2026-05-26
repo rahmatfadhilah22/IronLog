@@ -35,6 +35,9 @@ type RoutineExerciseSnapshotRow = {
   display_name: string;
   sort_order: number;
   rest_time_seconds: number;
+  equipment_type?: string;
+  muscle_group?: string;
+  workout_status?: string;
 };
 
 type WorkoutRow = {
@@ -58,6 +61,9 @@ type WorkoutExerciseRow = {
   display_name: string;
   sort_order: number;
   rest_time_seconds: number;
+  equipment_type?: string;
+  muscle_group?: string;
+  workout_status?: string;
 };
 
 type WorkoutSetRow = {
@@ -319,16 +325,19 @@ export async function getWorkoutDetailById(
 
   const exerciseRows = await db.getAllAsync<WorkoutExerciseRow>(
     `SELECT
-      id,
-      workout_id,
-      routine_exercise_id,
-      exercise_id,
-      display_name,
-      sort_order,
-      rest_time_seconds
+      workout_exercises.id,
+      workout_exercises.workout_id,
+      workout_exercises.routine_exercise_id,
+      workout_exercises.exercise_id,
+      workout_exercises.display_name,
+      workout_exercises.sort_order,
+      workout_exercises.rest_time_seconds,
+      exercises.equipment_type,
+      exercises.muscle_group
     FROM workout_exercises
-    WHERE workout_id = ?
-    ORDER BY sort_order ASC`,
+    LEFT JOIN exercises ON exercises.id = workout_exercises.exercise_id
+    WHERE workout_exercises.workout_id = ?
+    ORDER BY workout_exercises.sort_order ASC`,
     workoutId,
   );
 
@@ -367,10 +376,13 @@ export async function getWorkoutDetailById(
 
   const exercises: WorkoutExerciseDetail[] = exerciseRows.map((row) => {
     const sets = setsByExerciseId.get(row.id) ?? [];
-    const totalVolume = sets.reduce(
-      (sum, current) => sum + current.weight * current.reps,
-      0,
-    );
+    let totalVolume = 0;
+    if (row.equipment_type !== "Cardio" && row.muscle_group !== "Cardio") {
+      totalVolume = sets.reduce(
+        (sum, current) => sum + current.weight * current.reps,
+        0,
+      );
+    }
 
     return {
       id: row.id,
@@ -380,6 +392,8 @@ export async function getWorkoutDetailById(
       displayName: row.display_name,
       sortOrder: row.sort_order,
       restTimeSeconds: row.rest_time_seconds,
+      equipmentType: row.equipment_type,
+      muscleGroup: row.muscle_group,
       sets,
       totalVolume,
     };
