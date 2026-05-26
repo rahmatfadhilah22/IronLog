@@ -15,6 +15,7 @@ type CompletedSetRow = {
   weight: number;
   reps: number;
   unit: PreferredUnit;
+  set_type: string;
   performed_at: string;
 };
 
@@ -82,6 +83,7 @@ export async function rebuildExerciseStatsCache(
       workout_sets.weight,
       workout_sets.reps,
       workout_sets.unit,
+      workout_sets.set_type,
       COALESCE(
         workout_sets.completed_at,
         workouts.finished_at,
@@ -104,7 +106,6 @@ export async function rebuildExerciseStatsCache(
     const convertedWeight = convertWeight(row.weight, row.unit, preferredUnit);
     const reps = Math.max(0, Math.floor(row.reps));
     const setVolume = convertedWeight * reps;
-    const estimated = estimateOneRm(convertedWeight, reps, formula);
 
     const current =
       byExercise.get(row.exercise_id) ??
@@ -116,13 +117,17 @@ export async function rebuildExerciseStatsCache(
         sessionIds: new Set<string>(),
       } satisfies ExerciseAccumulator);
 
-    current.bestWeight = Math.max(current.bestWeight, convertedWeight);
-    current.bestOneRm = Math.max(current.bestOneRm, estimated);
     current.sessionIds.add(row.workout_id);
     current.workoutVolume.set(
       row.workout_id,
       (current.workoutVolume.get(row.workout_id) ?? 0) + setVolume,
     );
+
+    if (row.set_type !== "warmup") {
+      const estimated = estimateOneRm(convertedWeight, reps, formula);
+      current.bestWeight = Math.max(current.bestWeight, convertedWeight);
+      current.bestOneRm = Math.max(current.bestOneRm, estimated);
+    }
 
     if (!current.lastPerformed || row.performed_at > current.lastPerformed) {
       current.lastPerformed = row.performed_at;
@@ -306,6 +311,7 @@ export async function getExerciseProgressDetailById(
             workout_sets.weight,
             workout_sets.reps,
             workout_sets.unit,
+            workout_sets.set_type,
             COALESCE(
               workout_sets.completed_at,
               workouts.finished_at,
@@ -331,6 +337,7 @@ export async function getExerciseProgressDetailById(
             workout_sets.weight,
             workout_sets.reps,
             workout_sets.unit,
+            workout_sets.set_type,
             COALESCE(
               workout_sets.completed_at,
               workouts.finished_at,
@@ -371,13 +378,15 @@ export async function getExerciseProgressDetailById(
       setCount: 0,
     };
 
-    session.topWeight = Math.max(session.topWeight, convertedWeight);
     session.sessionVolume += convertedWeight * reps;
-    session.estimatedOneRm = Math.max(
-      session.estimatedOneRm,
-      estimateOneRm(convertedWeight, reps, formula),
-    );
     session.setCount += 1;
+    if (row.set_type !== "warmup") {
+      session.topWeight = Math.max(session.topWeight, convertedWeight);
+      session.estimatedOneRm = Math.max(
+        session.estimatedOneRm,
+        estimateOneRm(convertedWeight, reps, formula),
+      );
+    }
 
     if (row.performed_at > session.performedAt) {
       session.performedAt = row.performed_at;

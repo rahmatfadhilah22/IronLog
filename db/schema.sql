@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS workout_sets (
     rpe INTEGER CHECK (rpe IS NULL OR (rpe >= 1 AND rpe <= 10)),
     unit TEXT NOT NULL CHECK (unit IN ('kg', 'lb')),
     is_completed INTEGER NOT NULL DEFAULT 1 CHECK (is_completed IN (0, 1)),
+    set_type TEXT NOT NULL DEFAULT 'working' CHECK (set_type IN ('working', 'warmup', 'dropset', 'failure')),
     completed_at TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,

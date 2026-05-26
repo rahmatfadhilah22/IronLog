@@ -74,6 +74,7 @@ type WorkoutSetRow = {
   reps: number;
   rpe: number | null;
   unit: PreferredUnit;
+  set_type: "working" | "warmup" | "dropset" | "failure";
   is_completed: 0 | 1;
   completed_at: string | null;
   created_at: string;
@@ -350,6 +351,7 @@ export async function getWorkoutDetailById(
       workout_sets.reps,
       workout_sets.rpe,
       workout_sets.unit,
+      workout_sets.set_type,
       workout_sets.is_completed,
       workout_sets.completed_at,
       workout_sets.created_at,
@@ -470,11 +472,12 @@ export async function addWorkoutSet(
         reps,
         rpe,
         unit,
+        set_type,
         is_completed,
         completed_at,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
       createId(),
       input.workoutExerciseId,
       nextSetNumber,
@@ -482,6 +485,7 @@ export async function addWorkoutSet(
       reps,
       rpe,
       input.unit,
+      input.setType ?? "working",
       now,
       now,
       now,
@@ -532,12 +536,13 @@ export async function updateWorkoutSet(
 
     await db.runAsync(
       `UPDATE workout_sets
-      SET weight = ?, reps = ?, rpe = ?, unit = ?, updated_at = ?
+      SET weight = ?, reps = ?, rpe = ?, unit = ?, set_type = COALESCE(?, set_type), updated_at = ?
       WHERE id = ?`,
       weight,
       reps,
       rpe,
       input.unit,
+      input.setType ?? null,
       now,
       input.workoutSetId,
     );
@@ -811,6 +816,7 @@ function mapWorkoutSetRow(row: WorkoutSetRow): WorkoutSet {
     reps: row.reps,
     rpe: row.rpe,
     unit: row.unit,
+    setType: row.set_type ?? "working",
     isCompleted: row.is_completed === 1,
     completedAt: row.completed_at,
     createdAt: row.created_at,

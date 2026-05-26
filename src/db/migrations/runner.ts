@@ -3,12 +3,14 @@ import type { SQLiteDatabase } from "expo-sqlite";
 import { migration001Init } from "./001_init";
 import { migration002WorkoutTitleSnapshot } from "./002_workout_title_snapshot";
 import { migration003CustomExercises } from "./003_custom_exercises";
+import { migration004SetType } from "./004_set_type";
 import type { Migration } from "./types";
 
 const migrations: Migration[] = [
   migration001Init,
   migration002WorkoutTitleSnapshot,
   migration003CustomExercises,
+  migration004SetType,
 ].sort((left, right) => left.version - right.version);
 
 type UserVersionRow = {

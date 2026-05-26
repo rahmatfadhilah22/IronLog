@@ -3,6 +3,8 @@ import type { PreferredUnit } from "./settings";
 export type WorkoutStatus = "active" | "completed" | "cancelled";
 export type WorkoutSourceType = "routine" | "custom";
 
+export type SetType = "working" | "warmup" | "dropset" | "failure";
+
 export type WorkoutSet = {
   id: string;
   workoutExerciseId: string;
@@ -11,6 +13,7 @@ export type WorkoutSet = {
   reps: number;
   rpe: number | null;
   unit: PreferredUnit;
+  setType: SetType;
   isCompleted: boolean;
   completedAt: string | null;
   createdAt: string;
@@ -69,6 +72,7 @@ export type WorkoutSetInput = {
   reps: number;
   rpe?: number | null;
   unit: PreferredUnit;
+  setType?: SetType;
 };
 
 export type WorkoutSetUpdateInput = {
@@ -77,6 +81,7 @@ export type WorkoutSetUpdateInput = {
   reps: number;
   rpe?: number | null;
   unit: PreferredUnit;
+  setType?: SetType;
 };
 
 export type TopSetSummary = {

@@ -21,7 +21,7 @@ import { workoutService } from "../../services/workouts";
 import { bodyMetricsService } from "../../services/body-metrics";
 import { useExercisePickerStore, useRestTimerStore } from "../../stores";
 import type { PreferredUnit } from "../../types/settings";
-import type { WorkoutDetail, WorkoutSet } from "../../types/workout";
+import type { WorkoutDetail, WorkoutSet, SetType } from "../../types/workout";
 
 type ActiveWorkoutScreenProps = {
   workoutId: string;
@@ -39,6 +39,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   const [draftReps, setDraftReps] = useState("");
   const [draftRpe, setDraftRpe] = useState("");
   const [draftUnit, setDraftUnit] = useState<PreferredUnit>("kg");
+  const [draftSetType, setDraftSetType] = useState<SetType>("working");
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [pickerRequestKey, setPickerRequestKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -183,7 +184,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
 
     const lastSet = selectedExercise.sets[selectedExercise.sets.length - 1];
     if (lastSet) {
-      applySetToDraft(lastSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit);
+      applySetToDraft(lastSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit, setDraftSetType);
       return;
     }
 
@@ -239,7 +240,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
     }
 
     setEditingSetId(null);
-    applySetToDraft(lastSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit);
+    applySetToDraft(lastSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit, setDraftSetType);
   };
 
   const onSaveSet = async () => {
@@ -290,6 +291,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
           reps: parsedReps,
           rpe: parsedRpe,
           unit: draftUnit,
+          setType: draftSetType,
         });
         setEditingSetId(null);
         setFeedbackMessage("Set updated.");
@@ -328,7 +330,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
 
   const onEditSet = (workoutSet: WorkoutSet) => {
     setEditingSetId(workoutSet.id);
-    applySetToDraft(workoutSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit);
+    applySetToDraft(workoutSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit, setDraftSetType);
     setErrorMessage(null);
     setFeedbackMessage(null);
   };
@@ -581,7 +583,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
 
           <View style={styles.subControlRow}>
             <View style={styles.subInputGroup}>
-              <Text style={styles.inputLabel}>RPE (Optional)</Text>
+              <Text style={styles.inputLabel}>RPE</Text>
               <TextInput
                 value={draftRpe}
                 onChangeText={setDraftRpe}
@@ -590,6 +592,59 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
                 placeholder="-"
                 placeholderTextColor={themeTokens.colors.textSecondary}
               />
+            </View>
+            <View style={styles.subInputGroup}>
+              <Text style={styles.inputLabel}>Type</Text>
+              <View style={styles.unitRow}>
+                <Pressable
+                  onPress={() => setDraftSetType("working")}
+                  style={[
+                    styles.unitChip,
+                    draftSetType === "working" ? styles.unitChipSelected : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.unitChipLabel,
+                      draftSetType === "working" ? styles.unitChipLabelSelected : null,
+                    ]}
+                  >
+                    W
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setDraftSetType("warmup")}
+                  style={[
+                    styles.unitChip,
+                    draftSetType === "warmup" ? styles.unitChipSelected : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.unitChipLabel,
+                      draftSetType === "warmup" ? styles.unitChipLabelSelected : null,
+                    ]}
+                  >
+                    WUP
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setDraftSetType("dropset")}
+                  style={[
+                    styles.unitChip,
+                    draftSetType === "dropset" ? styles.unitChipSelected : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.unitChipLabel,
+                      draftSetType === "dropset" ? styles.unitChipLabelSelected : null,
+                    ]}
+                  >
+                    DRP
+                  </Text>
+                </Pressable>
+              </View>
             </View>
             <View style={styles.subInputGroup}>
               <Text style={styles.inputLabel}>Unit</Text>
@@ -660,7 +715,12 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
               {selectedExercise.sets.map((setItem) => (
                 <View key={setItem.id} style={styles.setRow}>
                   <View style={styles.setInfo}>
-                    <Text style={styles.setTitle}>SET {setItem.setNumber}</Text>
+                    <Text style={styles.setTitle}>
+                      SET {setItem.setNumber}
+                      {setItem.setType === "warmup" && " (WUP)"}
+                      {setItem.setType === "dropset" && " (DRP)"}
+                      {setItem.setType === "failure" && " (FAIL)"}
+                    </Text>
                     <Text style={styles.setData}>
                       {formatWeight(setItem.weight)} {setItem.unit.toUpperCase()} ×{" "}
                       {setItem.reps} REPS
@@ -770,11 +830,13 @@ function applySetToDraft(
   setReps: (value: string) => void,
   setRpe: (value: string) => void,
   setUnit: (value: PreferredUnit) => void,
+  setSetType: (value: SetType) => void,
 ): void {
   setWeight(formatWeight(workoutSet.weight));
   setReps(String(workoutSet.reps));
   setRpe(workoutSet.rpe ? String(workoutSet.rpe) : "");
   setUnit(workoutSet.unit);
+  setSetType(workoutSet.setType);
 }
 
 function formatWeight(value: number): string {
