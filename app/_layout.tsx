@@ -1,12 +1,53 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { APP_NAME } from "../src/core/constants";
 import { themeTokens } from "../src/core/theme";
 import { useDatabaseBootstrap } from "../src/db/sqlite";
 import { initializeRestTimerNotifications } from "../src/services/notifications";
+import { pinAuthService } from "../src/services/auth";
+import { useAuthStore } from "../src/stores/auth-store";
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const [authChecked, setAuthChecked] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
+  const isUnlocked = useAuthStore((s) => s.isUnlocked);
+
+  useEffect(() => {
+    pinAuthService
+      .hasPin()
+      .then((v) => {
+        setHasPin(v);
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        setAuthChecked(true);
+      });
+  }, []);
+
+  if (!authChecked) {
+    return (
+      <View style={styles.stateContainer}>
+        <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
+        <Text style={styles.stateLabel}>{APP_NAME.toUpperCase()}</Text>
+      </View>
+    );
+  }
+
+  if (!hasPin) {
+    // @ts-expect-error — no-screen-matching route
+    return <>{children}</>;
+  }
+
+  if (!isUnlocked) {
+    // @ts-expect-error — no-screen-matching route
+    return <>{children}</>;
+  }
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   const { isReady, error, retry } = useDatabaseBootstrap();
@@ -41,39 +82,46 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: themeTokens.colors.backgroundDeep },
-          headerTintColor: themeTokens.colors.textPrimary,
-          contentStyle: { backgroundColor: themeTokens.colors.background },
-          headerTitleStyle: { fontWeight: "700" },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="routines/create" options={{ title: "Create Routine" }} />
-        <Stack.Screen name="routines/[routineId]" options={{ title: "Routine Detail" }} />
-        <Stack.Screen name="workout/[workoutId]" options={{ title: "Active Workout" }} />
-        <Stack.Screen name="workout/summary" options={{ title: "Workout Summary" }} />
-        <Stack.Screen name="exercise/[exerciseId]" options={{ title: "Exercise Insights" }} />
-        <Stack.Screen name="body-metrics" options={{ title: "Body Metrics" }} />
-        <Stack.Screen
-          name="modal/exercise-picker"
-          options={{
-            title: "Select Exercise",
-            presentation: "modal",
-            headerShown: false,
+      <AuthGate>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: themeTokens.colors.backgroundDeep },
+            headerTintColor: themeTokens.colors.textPrimary,
+            contentStyle: { backgroundColor: themeTokens.colors.background },
+            headerTitleStyle: { fontWeight: "700" },
           }}
-        />
-        <Stack.Screen
-          name="modal/rest-timer"
-          options={{
-            title: "Rest Timer",
-            presentation: "transparentModal",
-            headerShown: false,
-            contentStyle: { backgroundColor: "transparent" },
-          }}
-        />
-      </Stack>
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="routines/create" options={{ title: "Create Routine" }} />
+          <Stack.Screen name="routines/[routineId]" options={{ title: "Routine Detail" }} />
+          <Stack.Screen name="workout/[workoutId]" options={{ title: "Active Workout" }} />
+          <Stack.Screen name="workout/summary" options={{ title: "Workout Summary" }} />
+          <Stack.Screen name="exercise/[exerciseId]" options={{ title: "Exercise Insights" }} />
+          <Stack.Screen name="body-metrics" options={{ title: "Body Metrics" }} />
+          <Stack.Screen
+            name="modal/exercise-picker"
+            options={{
+              title: "Select Exercise",
+              presentation: "modal",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="modal/rest-timer"
+            options={{
+              title: "Rest Timer",
+              presentation: "transparentModal",
+              headerShown: false,
+              contentStyle: { backgroundColor: "transparent" },
+            }}
+          />
+          <Stack.Screen name="auth/setup" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/recovery" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/change-pin" options={{ title: "Ganti PIN", headerShown: false }} />
+          <Stack.Screen name="auth/change-recovery" options={{ title: "Ganti Pertanyaan", headerShown: false }} />
+        </Stack>
+      </AuthGate>
     </>
   );
 }

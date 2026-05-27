@@ -36,7 +36,8 @@
       "expo-router",
       "expo-notifications",
       "expo-sqlite",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

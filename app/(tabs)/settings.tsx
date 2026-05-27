@@ -10,6 +10,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Application from "expo-application";
+import Constants from "expo-constants";
+import { router } from "expo-router";
 
 import { APP_NAME } from "../../src/core/constants";
 import { ConfirmationDialog } from "../../src/components";
@@ -18,6 +21,9 @@ import { analyticsService } from "../../src/services/analytics";
 import { backupService, getBackupWarningText } from "../../src/services/backup";
 import { appSettingsService } from "../../src/services/settings";
 import type { OneRmFormula, PreferredUnit } from "../../src/types/settings";
+
+const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
+const NATIVE_BUILD = Application.nativeBuildVersion;
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -272,6 +278,20 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Security</Text>
+        <ActionButton
+          label="Change PIN"
+          description="Ubah PIN akses aplikasi"
+          onPress={() => router.push("/auth/change-pin")}
+        />
+        <ActionButton
+          label="Change Recovery Question"
+          description="Ubah pertanyaan pemulihan"
+          onPress={() => router.push("/auth/change-recovery")}
+        />
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Data & Backup</Text>
         <ActionButton
           label="Export JSON Backup"
@@ -299,6 +319,7 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <Text style={styles.aboutText}>{APP_NAME} mobile strength log</Text>
+        <Text style={styles.versionText}>v{APP_VERSION}{NATIVE_BUILD ? ` (${NATIVE_BUILD})` : ""}</Text>
       </View>
 
       {isBusy ? <Text style={styles.infoText}>Processing...</Text> : null}
@@ -546,6 +567,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     fontWeight: "700",
     textTransform: "uppercase",
+  },
+  versionText: {
+    color: themeTokens.colors.textSecondary,
+    textAlign: "center",
+    fontSize: 10,
+    letterSpacing: 1,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    opacity: 0.7,
   },
   infoText: {
     color: themeTokens.colors.textSecondary,
