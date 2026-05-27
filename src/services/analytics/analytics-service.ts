@@ -1,6 +1,7 @@
 import {
   getCompletedSetCount,
   getCompletedWorkoutCount,
+  getCompletedWorkoutDatesByMonth,
   getExerciseProgressDetailById,
   getProgressTrackedExerciseCount,
   listProgressExerciseSummaries,
@@ -30,11 +31,9 @@ class AnalyticsService {
     const db = await getDatabase();
     const settings = await appSettingsService.get();
 
-    await rebuildExerciseStatsCache(
-      db,
-      settings.preferredUnit,
-      settings.oneRmFormula,
-    );
+    // Fire-and-forget: rebuild cache in background so reads can start immediately.
+    // Reads are not blocked by a stale cache — fresh data will be picked up on next visit.
+    void this.rebuildExerciseStats();
 
     const [trackedExerciseCount, completedWorkoutCount, totalCompletedSets, topLifts, exercises] =
       await Promise.all([
@@ -63,11 +62,8 @@ class AnalyticsService {
     const db = await getDatabase();
     const settings = await appSettingsService.get();
 
-    await rebuildExerciseStatsCache(
-      db,
-      settings.preferredUnit,
-      settings.oneRmFormula,
-    );
+    // Fire-and-forget: rebuild in background.
+    void this.rebuildExerciseStats();
 
     return getExerciseProgressDetailById(
       db,
@@ -76,6 +72,14 @@ class AnalyticsService {
       settings.oneRmFormula,
       range,
     );
+  }
+
+  async getWorkoutCalendarByMonth(
+    month: number,
+    year: number,
+  ): Promise<{ date: string }[]> {
+    const db = await getDatabase();
+    return getCompletedWorkoutDatesByMonth(db, month, year);
   }
 }
 

@@ -21,7 +21,6 @@ import type { Exercise } from "../../src/types/exercise";
 const CUSTOM_MUSCLE_GROUP_OPTIONS = [
   "Arms",
   "Back",
-  "Cardio",
   "Chest",
   "Core",
   "Legs",
@@ -33,13 +32,8 @@ const CUSTOM_EQUIPMENT_TYPE_OPTIONS = [
   "Bodyweight",
   "Cable",
   "Dumbbell",
-  "Elliptical",
   "EZ Bar",
   "Machine",
-  "Outdoor",
-  "Rowing Machine",
-  "Stationary Bike",
-  "Treadmill",
 ];
 
 export default function ExercisePickerScreen() {

@@ -183,6 +183,9 @@ export default function RestTimerModalScreen() {
         </Pressable>
         <Pressable
           onPress={() => {
+            void cancelRestTimerNotification(scheduledNotificationIdRef.current);
+            scheduledNotificationIdRef.current = null;
+            store.stopTimer();
             router.back();
           }}
           style={({ pressed }) => [styles.primaryButton, pressed ? styles.pressed : null]}

@@ -64,6 +64,7 @@ type WorkoutExerciseRow = {
   equipment_type?: string;
   muscle_group?: string;
   workout_status?: string;
+  notes?: string;
 };
 
 type WorkoutSetRow = {
@@ -275,9 +276,10 @@ export async function startWorkoutFromRoutine(
           display_name,
           sort_order,
           rest_time_seconds,
+          notes,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?)`,
         createId(),
         workoutId,
         snapshot.routine_exercise_id,
@@ -332,6 +334,7 @@ export async function getWorkoutDetailById(
       workout_exercises.display_name,
       workout_exercises.sort_order,
       workout_exercises.rest_time_seconds,
+      workout_exercises.notes,
       exercises.equipment_type,
       exercises.muscle_group
     FROM workout_exercises
@@ -396,6 +399,7 @@ export async function getWorkoutDetailById(
       muscleGroup: row.muscle_group,
       sets,
       totalVolume,
+      notes: row.notes ?? undefined,
     };
   });
 
@@ -659,9 +663,10 @@ export async function addWorkoutExerciseBlock(
         display_name,
         sort_order,
         rest_time_seconds,
+        notes,
         created_at,
         updated_at
-      ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, NULL, ?, ?, ?, ?, '', ?, ?)`,
       createId(),
       workoutId,
       exercise.id,
@@ -833,4 +838,18 @@ function sanitizeRpe(value?: number | null): number | null {
   }
 
   return rounded;
+}
+
+export async function updateWorkoutExerciseNotes(
+  db: SQLiteDatabase,
+  workoutExerciseId: string,
+  notes: string,
+): Promise<void> {
+  const now = nowIsoTimestamp();
+  await db.runAsync(
+    `UPDATE workout_exercises SET notes = ?, updated_at = ? WHERE id = ?`,
+    notes,
+    now,
+    workoutExerciseId,
+  );
 }

@@ -29,6 +29,7 @@ export type WorkoutExerciseDetail = {
   muscleGroup?: string;
   sets: WorkoutSet[];
   totalVolume: number;
+  notes?: string;
 };
 
 export type WorkoutDetail = {

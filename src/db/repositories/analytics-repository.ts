@@ -7,6 +7,7 @@ import type {
   ProgressExerciseSummary,
   ProgressRange,
 } from "../../types/progress";
+import type { MonthYear } from "../../types/calendar";
 import type { OneRmFormula, PreferredUnit } from "../../types/settings";
 
 type CompletedSetRow = {
@@ -449,4 +450,45 @@ function getRangeCutoff(range: ProgressRange): string | null {
   const date = new Date();
   date.setDate(date.getDate() - days);
   return date.toISOString();
+}
+
+type WorkoutCalendarDayRow = {
+  finished_at: string;
+};
+
+export type WorkoutCalendarDay = {
+  date: string; // YYYY-MM-DD
+};
+
+export async function getCompletedWorkoutDatesByMonth(
+  db: SQLiteDatabase,
+  month: number, // 0-indexed (0 = January)
+  year: number,
+): Promise<WorkoutCalendarDay[]> {
+  const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+  const endMonth = month === 11 ? 0 : month + 1;
+  const endYear = month === 11 ? year + 1 : year;
+  const endDate = `${endYear}-${String(endMonth + 1).padStart(2, "0")}-01`;
+
+  const rows = await db.getAllAsync<WorkoutCalendarDayRow>(
+    `SELECT finished_at
+     FROM workouts
+     WHERE status = 'completed'
+       AND finished_at IS NOT NULL
+       AND finished_at >= ?
+       AND finished_at < ?
+     ORDER BY finished_at ASC`,
+    startDate,
+    endDate,
+  );
+
+  const seen = new Set<string>();
+  return rows
+    .map((row) => row.finished_at.slice(0, 10))
+    .filter((date) => {
+      if (seen.has(date)) return false;
+      seen.add(date);
+      return true;
+    })
+    .map((date) => ({ date }));
 }

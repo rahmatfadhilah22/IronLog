@@ -1,6 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -25,82 +25,56 @@ export default function ExerciseProgressScreen() {
   const exerciseId = asFirstString(params.exerciseId);
   const [selectedRange, setSelectedRange] = useState<ProgressRange>("30d");
   const [snapshotMetric, setSnapshotMetric] = useState<SnapshotMetric>("weight");
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [detail, setDetail] = useState<ExerciseProgressDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const pendingRangeRef = useRef<ProgressRange>("30d");
 
   const loadDetail = useCallback(() => {
     if (!exerciseId) {
-      setIsLoading(false);
       setErrorMessage("Invalid exercise ID.");
       setDetail(null);
-      return () => {};
+      return;
     }
 
-    let isActive = true;
-    setIsLoading(true);
+    const range = pendingRangeRef.current;
     setErrorMessage(null);
+    setIsLoading(true);
 
     analyticsService
-      .getExerciseProgressDetail(exerciseId, selectedRange)
+      .getExerciseProgressDetail(exerciseId, range)
       .then((result) => {
-        if (!isActive) {
-          return;
-        }
-
+        if (pendingRangeRef.current !== range) return; // stale response
         if (!result) {
           setErrorMessage("Exercise data not found.");
           setDetail(null);
           return;
         }
-
         setDetail(result);
       })
       .catch((error: unknown) => {
-        if (isActive) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "Failed to load exercise insights.",
-          );
-        }
+        if (pendingRangeRef.current !== range) return;
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Failed to load exercise insights.",
+        );
+        setDetail(null);
       })
       .finally(() => {
-        if (isActive) {
+        if (pendingRangeRef.current === range) {
           setIsLoading(false);
         }
       });
-
-    return () => {
-      isActive = false;
-    };
-  }, [exerciseId, selectedRange]);
+  }, [exerciseId]);
 
   useFocusEffect(loadDetail);
+  useEffect(() => {
+    if (exerciseId) loadDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exerciseId, selectedRange]);
 
-  if (isLoading) {
-    return (
-      <View style={styles.centerState}>
-        <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
-      </View>
-    );
-  }
-
-  if (!detail) {
-    return (
-      <View style={styles.centerState}>
-        <Text style={styles.errorText}>{errorMessage ?? "Details unavailable."}</Text>
-        <PrimaryButton
-          label="Back To Progress"
-          onPress={() => {
-            router.back();
-          }}
-        />
-      </View>
-    );
-  }
-
-  return (
+  return detail ? (
     <ScrollView
       style={styles.container}
       contentContainerStyle={[
@@ -121,9 +95,7 @@ export default function ExerciseProgressScreen() {
         {(["30d", "90d", "all"] as const).map((rangeValue) => (
           <Pressable
             key={rangeValue}
-            onPress={() => {
-              setSelectedRange(rangeValue);
-            }}
+            onPress={() => setSelectedRange(rangeValue)}
             style={[
               styles.rangeChip,
               selectedRange === rangeValue ? styles.rangeChipSelected : null,
@@ -178,6 +150,17 @@ export default function ExerciseProgressScreen() {
 
       <SessionHistorySection detail={detail} />
     </ScrollView>
+  ) : (
+    <View style={styles.centerState}>
+      {errorMessage ? (
+        <>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+          <PrimaryButton label="Back To Progress" onPress={() => router.back()} />
+        </>
+      ) : (
+        <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
+      )}
+    </View>
   );
 }
 

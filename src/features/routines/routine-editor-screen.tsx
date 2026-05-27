@@ -582,10 +582,9 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   exerciseHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: themeTokens.spacing.md,
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: themeTokens.spacing.xs,
   },
   exerciseCount: {
     color: themeTokens.colors.accentPrimary,

@@ -48,6 +48,8 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
   const [nowTimestamp, setNowTimestamp] = useState(Date.now());
   const [pendingDeleteSet, setPendingDeleteSet] = useState<WorkoutSet | null>(null);
   const [isFinishDialogVisible, setIsFinishDialogVisible] = useState(false);
+  const [exerciseNotes, setExerciseNotes] = useState("");
+  const [notesExpanded, setNotesExpanded] = useState(false);
   const handledPickRef = useRef<string | null>(null);
 
   const picked = useExercisePickerStore((state) => state.picked);
@@ -181,6 +183,9 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       return;
     }
 
+    setExerciseNotes(selectedExercise.notes ?? "");
+    setNotesExpanded(false);
+
     const lastSet = selectedExercise.sets[selectedExercise.sets.length - 1];
     if (lastSet) {
       applySetToDraft(lastSet, setDraftWeight, setDraftReps, setDraftRpe, setDraftUnit);
@@ -258,15 +263,13 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
       if (selectedExercise.equipmentType === "Bodyweight" && draftWeight.trim() === "") {
         setErrorMessage("Please enter your bodyweight.");
       } else {
-        const label = selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio" ? "Time" : "Weight";
-        setErrorMessage(`${label} must be a number greater than or equal to 0.`);
+        setErrorMessage("Weight must be a number greater than or equal to 0.");
       }
       return;
     }
 
     if (!Number.isInteger(parsedReps) || parsedReps < 0) {
-      const label = selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio" ? "Distance" : "Reps";
-      setErrorMessage(`${label} must be a whole number greater than or equal to 0.`);
+      setErrorMessage("Reps must be a whole number greater than or equal to 0.");
       return;
     }
 
@@ -523,9 +526,44 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
             />
             <MetricPill
               label="VOLUME"
-              value={formatVolume(selectedExercise.sets, preferredUnit, selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio")}
+              value={formatVolume(selectedExercise.sets, preferredUnit)}
             />
           </View>
+
+          <Pressable
+            style={styles.notesToggle}
+            onPress={() => setNotesExpanded((prev) => !prev)}
+          >
+            <Text style={styles.notesToggleLabel}>Catatan</Text>
+            {exerciseNotes.trim() ? (
+              <Text
+                style={styles.notesPreview}
+                numberOfLines={notesExpanded ? undefined : 1}
+              >
+                {exerciseNotes}
+              </Text>
+            ) : null}
+            <Text style={styles.notesChevron}>{notesExpanded ? "▲" : "▼"}</Text>
+          </Pressable>
+
+          {notesExpanded && (
+            <TextInput
+              style={styles.notesInput}
+              value={exerciseNotes}
+              onChangeText={setExerciseNotes}
+              onBlur={() => {
+                if (!selectedExercise) return;
+                void workoutService.updateExerciseNotes(
+                  selectedExercise.id,
+                  exerciseNotes.trim(),
+                );
+              }}
+              placeholder="Contoh: Pengaturan kursi di lubang ke-4"
+              placeholderTextColor={themeTokens.colors.textSecondary}
+              multiline
+              maxLength={500}
+            />
+          )}
         </View>
 
         <View style={styles.loggerSection}>
@@ -549,9 +587,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
           <View style={styles.loggerGrid}>
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>
-                {selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio"
-                  ? "Time (Minutes)"
-                  : selectedExercise.equipmentType === "Bodyweight" ? "Weight (BW)" : "Weight"}
+                {selectedExercise.equipmentType === "Bodyweight" ? "Weight (BW)" : "Weight"}
               </Text>
               <TextInput
                 value={draftWeight}
@@ -563,11 +599,7 @@ export function ActiveWorkoutScreen({ workoutId }: ActiveWorkoutScreenProps) {
               />
             </View>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>
-                {selectedExercise.equipmentType === "Cardio" || selectedExercise.muscleGroup === "Cardio"
-                  ? "Distance"
-                  : "Reps"}
-              </Text>
+              <Text style={styles.inputLabel}>Reps</Text>
               <TextInput
                 value={draftReps}
                 onChangeText={setDraftReps}
@@ -785,13 +817,7 @@ function formatWeight(value: number): string {
   return value.toFixed(1);
 }
 
-function formatVolume(sets: WorkoutSet[], preferredUnit: PreferredUnit, isCardio?: boolean): string {
-  if (isCardio) {
-    const totalDistance = sets.reduce((sum, currentSet) => sum + currentSet.reps, 0);
-    const totalTime = sets.reduce((sum, currentSet) => sum + currentSet.weight, 0);
-    return `${Math.round(totalDistance)} / ${Math.round(totalTime)} min`;
-  }
-
+function formatVolume(sets: WorkoutSet[], preferredUnit: PreferredUnit): string {
   const totalVolume = sets.reduce((sum, currentSet) => {
     const convertedWeight = convertWeight(
       currentSet.weight,
@@ -1240,5 +1266,44 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     opacity: 0.8,
+  },
+  notesToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: themeTokens.spacing.sm,
+    paddingVertical: themeTokens.spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: themeTokens.colors.surfaceHigh,
+    marginTop: themeTokens.spacing.xs,
+  },
+  notesToggleLabel: {
+    color: themeTokens.colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  notesPreview: {
+    flex: 1,
+    color: themeTokens.colors.textSecondary,
+    fontSize: 11,
+    fontStyle: "italic",
+  },
+  notesChevron: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  notesInput: {
+    minHeight: 80,
+    backgroundColor: themeTokens.colors.surfaceHigh,
+    borderRadius: themeTokens.radius.sm,
+    color: themeTokens.colors.textPrimary,
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: themeTokens.spacing.sm,
+    paddingVertical: themeTokens.spacing.sm,
+    marginTop: themeTokens.spacing.xs,
+    textAlignVertical: "top",
   },
 });

@@ -2,6 +2,7 @@ export { getAppSettings, updateAppSettings } from "./app-settings-repository";
 export {
   getCompletedSetCount,
   getCompletedWorkoutCount,
+  getCompletedWorkoutDatesByMonth,
   getExerciseProgressDetailById,
   getProgressTrackedExerciseCount,
   listProgressExerciseSummaries,
@@ -34,5 +35,6 @@ export {
   getWorkoutDetailById,
   getWorkoutSummaryById,
   startWorkoutFromRoutine,
+  updateWorkoutExerciseNotes,
   updateWorkoutSet,
 } from "./workout-repository";

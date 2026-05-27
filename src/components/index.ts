@@ -1,3 +1,4 @@
+export { CalendarHeatmap } from "./calendar-heatmap";
 export { ConfirmationDialog } from "./confirmation-dialog";
 export { EmptyState } from "./empty-state";
 export { PrimaryButton } from "./primary-button";

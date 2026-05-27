@@ -8,6 +8,7 @@ import {
   getWorkoutDetailById,
   getWorkoutSummaryById,
   startWorkoutFromRoutine,
+  updateWorkoutExerciseNotes,
   updateWorkoutSet,
 } from "../../db/repositories";
 import { appSettingsService } from "../settings/app-settings-service";
@@ -68,6 +69,11 @@ class WorkoutService {
     const db = await getDatabase();
     await finishWorkout(db, workoutId);
     await analyticsService.rebuildExerciseStats();
+  }
+
+  async updateExerciseNotes(workoutExerciseId: string, notes: string): Promise<void> {
+    const db = await getDatabase();
+    await updateWorkoutExerciseNotes(db, workoutExerciseId, notes);
   }
 
   async getWorkoutSummary(workoutId: string): Promise<WorkoutSummary | null> {

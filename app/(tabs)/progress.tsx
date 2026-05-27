@@ -1,5 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,10 +10,24 @@ import {
   View,
 } from "react-native";
 
-import { EmptyState } from "../../src/components";
+import { CalendarHeatmap, EmptyState } from "../../src/components";
 import { themeTokens } from "../../src/core/theme";
 import { analyticsService } from "../../src/services/analytics";
 import type { ProgressOverview } from "../../src/types/progress";
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.statCard}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+    </View>
+  );
+}
+
+function formatNumber(value: number): string {
+  if (Number.isInteger(value)) return value.toLocaleString();
+  return value.toFixed(1);
+}
 
 export default function ProgressScreen() {
   const router = useRouter();
@@ -31,9 +44,7 @@ export default function ProgressScreen() {
     analyticsService
       .getProgressOverview(search.trim() || undefined)
       .then((result) => {
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
         setOverview(result);
       })
       .catch((error: unknown) => {
@@ -44,17 +55,13 @@ export default function ProgressScreen() {
         }
       })
       .finally(() => {
-        if (isActive) {
-          setIsLoading(false);
-        }
+        if (isActive) setIsLoading(false);
       });
 
-    return () => {
-      isActive = false;
-    };
+    return () => { isActive = false; };
   }, [search]);
 
-  useFocusEffect(loadOverview);
+  useFocusEffect(useCallback(() => { loadOverview(); }, [loadOverview]));
 
   return (
     <View style={styles.container}>
@@ -71,7 +78,7 @@ export default function ProgressScreen() {
         style={styles.searchInput}
       />
 
-      {isLoading ? (
+      {isLoading && !overview ? (
         <View style={styles.centerState}>
           <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
         </View>
@@ -84,9 +91,7 @@ export default function ProgressScreen() {
           title="No Progress Yet"
           description="Finish a workout first to unlock exercise insights."
           actionLabel="Go To Routines"
-          onPress={() => {
-            router.push("/routines");
-          }}
+          onPress={() => { router.push("/routines"); }}
         />
       ) : (
         <ScrollView
@@ -95,18 +100,14 @@ export default function ProgressScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.summaryGrid}>
-            <StatCard
-              label="Tracked Exercises"
-              value={String(overview.trackedExerciseCount)}
-            />
-            <StatCard
-              label="Completed Workouts"
-              value={String(overview.completedWorkoutCount)}
-            />
-            <StatCard
-              label="Completed Sets"
-              value={String(overview.totalCompletedSets)}
-            />
+            <StatCard label="Tracked Exercises" value={String(overview.trackedExerciseCount)} />
+            <StatCard label="Completed Workouts" value={String(overview.completedWorkoutCount)} />
+            <StatCard label="Completed Sets" value={String(overview.totalCompletedSets)} />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Calendar</Text>
+            <CalendarHeatmap />
           </View>
 
           <View style={styles.section}>
@@ -120,16 +121,13 @@ export default function ProgressScreen() {
                 <Pressable
                   key={item.exerciseId}
                   style={styles.topLiftCard}
-                  onPress={() => {
-                    router.push(`/exercise/${item.exerciseId}` as never);
-                  }}
+                  onPress={() => { router.push(`/exercise/${item.exerciseId}` as never); }}
                 >
                   <Text style={styles.topLiftName} numberOfLines={2}>
                     {item.exerciseName.toUpperCase()}
                   </Text>
                   <Text style={styles.topLiftValue}>
-                    {formatNumber(item.bestWeight)}{" "}
-                    {overview.preferredUnit.toUpperCase()}
+                    {formatNumber(item.bestWeight)} {overview.preferredUnit.toUpperCase()}
                   </Text>
                   <Text style={styles.topLiftMeta}>
                     1RM {formatNumber(item.bestOneRm)} {overview.preferredUnit.toUpperCase()}
@@ -149,9 +147,7 @@ export default function ProgressScreen() {
                     styles.exerciseRow,
                     pressed ? styles.exerciseRowPressed : null,
                   ]}
-                  onPress={() => {
-                    router.push(`/exercise/${exercise.exerciseId}` as never);
-                  }}
+                  onPress={() => { router.push(`/exercise/${exercise.exerciseId}` as never); }}
                 >
                   <View style={styles.exerciseLeft}>
                     <Text style={styles.exerciseRank}>
@@ -182,9 +178,7 @@ export default function ProgressScreen() {
               styles.bodyMetricsButton,
               pressed ? styles.bodyMetricsButtonPressed : null,
             ]}
-            onPress={() => {
-              router.push("/body-metrics");
-            }}
+            onPress={() => { router.push("/body-metrics"); }}
           >
             <Text style={styles.bodyMetricsLabel}>Open Body Metrics</Text>
           </Pressable>
@@ -194,27 +188,79 @@ export default function ProgressScreen() {
   );
 }
 
-type StatCardProps = {
-  label: string;
-  value: string;
-};
-
-function StatCard({ label, value }: StatCardProps) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  );
-}
-
-function formatNumber(value: number): string {
-  if (Number.isInteger(value)) {
-    return value.toLocaleString();
-  }
-
-  return value.toFixed(1);
-}
+const calendarStyles = StyleSheet.create({
+  container: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    padding: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
+  },
+  nav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  navBtn: {
+    minWidth: 40,
+    minHeight: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navArrow: {
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  monthLabel: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  dayLabels: {
+    flexDirection: "row",
+  },
+  dayLabel: {
+    flex: 1,
+    textAlign: "center",
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  cell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dotCell: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: themeTokens.colors.accentPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dotCellToday: {
+    borderWidth: 2,
+    borderColor: themeTokens.colors.textPrimary,
+  },
+  dayNum: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  dayNumToday: {
+    color: themeTokens.colors.textPrimary,
+    fontWeight: "800",
+  },
+});
 
 const styles = StyleSheet.create({
   container: {

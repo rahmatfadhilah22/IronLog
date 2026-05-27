@@ -16,6 +16,13 @@ coverage/
 *.ipa
 *.hprof
 
+# Android (Expo prebuild) — keep source, ignore build artifacts
+android/build/
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+
 # Logs
 *.log
 npm-debug.*
