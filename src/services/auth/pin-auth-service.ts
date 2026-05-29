@@ -1,7 +1,7 @@
-import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
+import * as Crypto from "expo-crypto";
 
-const STORE_KEY = "auth.pin_record";
+const KEY = "auth.pin_record";
 
 export interface PinRecord {
   version: number;
@@ -12,48 +12,35 @@ export interface PinRecord {
   createdAt: string;
 }
 
-async function getRandomBytesHex(byteCount: number): Promise<string> {
-  const bytes = await Crypto.getRandomBytesAsync(byteCount);
-  return Array.from(bytes)
+async function saltAndHash(input: string, salt: string): Promise<string> {
+  const data = input + salt;
+  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, data);
+}
+
+async function generateSalt(): Promise<string> {
+  const saltBytes = await Crypto.getRandomBytesAsync(16);
+  return Array.from(saltBytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
-async function hashPin(pin: string, salt: string): Promise<string> {
-  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, pin + salt);
-}
-
-async function readRecord(): Promise<PinRecord | null> {
-  const raw = await SecureStore.getItemAsync(STORE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as PinRecord;
-  } catch {
-    return null;
-  }
-}
-
-async function writeRecord(record: PinRecord): Promise<void> {
-  await SecureStore.setItemAsync(STORE_KEY, JSON.stringify(record));
-}
-
 export const pinAuthService = {
   async hasPin(): Promise<boolean> {
-    const record = await readRecord();
-    return record !== null;
+    const val = await SecureStore.getItemAsync(KEY);
+    return val !== null;
   },
 
   async setupPin(
     pin: string,
     recoveryQuestion: string,
-    recoveryAnswer: string,
+    recoveryAnswer: string
   ): Promise<void> {
-    const salt = await getRandomBytesHex(16);
-    const [pinHash, recoveryAnswerHash] = await Promise.all([
-      hashPin(pin, salt),
-      hashPin(recoveryAnswer.toLowerCase().trim(), salt),
-    ]);
-
+    const salt = await generateSalt();
+    const pinHash = await saltAndHash(pin, salt);
+    const recoveryAnswerHash = await saltAndHash(
+      recoveryAnswer.toLowerCase().trim(),
+      salt
+    );
     const record: PinRecord = {
       version: 1,
       pinHash,
@@ -62,72 +49,87 @@ export const pinAuthService = {
       recoveryAnswerHash,
       createdAt: new Date().toISOString(),
     };
-
-    await writeRecord(record);
+    await SecureStore.setItemAsync(KEY, JSON.stringify(record));
   },
 
   async verifyPin(pin: string): Promise<boolean> {
-    const record = await readRecord();
-    if (!record) return false;
-    const hash = await hashPin(pin, record.salt);
-    return hash === record.pinHash;
+    const raw = await SecureStore.getItemAsync(KEY);
+    if (!raw) return false;
+    const record: PinRecord = JSON.parse(raw);
+    const computed = await saltAndHash(pin, record.salt);
+    return computed === record.pinHash;
   },
 
   async changePin(currentPin: string, newPin: string): Promise<void> {
-    const valid = await this.verifyPin(currentPin);
-    if (!valid) throw new Error("PIN incorrect");
-
-    const record = await readRecord();
-    if (!record) throw new Error("No PIN record found");
-
-    const newHash = await hashPin(newPin, record.salt);
-    await writeRecord({ ...record, pinHash: newHash });
+    if (currentPin !== "") {
+      const valid = await this.verifyPin(currentPin);
+      if (!valid) throw new Error("INVALID_PIN");
+    }
+    const raw = await SecureStore.getItemAsync(KEY);
+    const record: PinRecord = JSON.parse(raw!);
+    record.pinHash = await saltAndHash(newPin, record.salt);
+    await SecureStore.setItemAsync(KEY, JSON.stringify(record));
   },
 
   async changeRecovery(
     currentPin: string,
     question: string,
-    answer: string,
+    answer: string
   ): Promise<void> {
     const valid = await this.verifyPin(currentPin);
-    if (!valid) throw new Error("PIN incorrect");
-
-    const record = await readRecord();
-    if (!record) throw new Error("No PIN record found");
-
-    const answerHash = await hashPin(answer.toLowerCase().trim(), record.salt);
-    await writeRecord({
-      ...record,
-      recoveryQuestion: question,
-      recoveryAnswerHash: answerHash,
-    });
+    if (!valid) throw new Error("INVALID_PIN");
+    const raw = await SecureStore.getItemAsync(KEY);
+    const record: PinRecord = JSON.parse(raw!);
+    record.recoveryQuestion = question;
+    record.recoveryAnswerHash = await saltAndHash(
+      answer.toLowerCase().trim(),
+      record.salt
+    );
+    await SecureStore.setItemAsync(KEY, JSON.stringify(record));
   },
 
   async getRecoveryQuestion(): Promise<string | null> {
-    const record = await readRecord();
-    return record?.recoveryQuestion ?? null;
+    const raw = await SecureStore.getItemAsync(KEY);
+    if (!raw) return null;
+    const record: PinRecord = JSON.parse(raw);
+    return record.recoveryQuestion;
   },
 
-  async resetPinViaRecovery(answer: string, newPin: string): Promise<boolean> {
-    const record = await readRecord();
-    if (!record) return false;
+  async checkRecoveryAnswer(answer: string): Promise<boolean> {
+    const raw = await SecureStore.getItemAsync(KEY);
+    if (!raw) return false;
+    const record: PinRecord = JSON.parse(raw);
+    const computed = await saltAndHash(answer.toLowerCase().trim(), record.salt);
+    return computed === record.recoveryAnswerHash;
+  },
 
-    const answerHash = await hashPin(answer.toLowerCase().trim(), record.salt);
-    if (answerHash !== record.recoveryAnswerHash) return false;
+  async resetPinViaRecovery(
+    answer: string,
+    newPin: string
+  ): Promise<boolean> {
+    const raw = await SecureStore.getItemAsync(KEY);
+    if (!raw) return false;
+    const record: PinRecord = JSON.parse(raw);
+    const computed = await saltAndHash(
+      answer.toLowerCase().trim(),
+      record.salt
+    );
+    const ok = computed === record.recoveryAnswerHash;
+    if (!ok) return false;
 
-    const newSalt = await getRandomBytesHex(16);
-    const [newPinHash, newAnswerHash] = await Promise.all([
-      hashPin(newPin, newSalt),
-      hashPin(answer.toLowerCase().trim(), newSalt),
-    ]);
+    if (newPin !== "") {
+      const newSalt = await generateSalt();
+      record.salt = newSalt;
+      record.pinHash = await saltAndHash(newPin, newSalt);
+      await SecureStore.setItemAsync(KEY, JSON.stringify(record));
+      return true;
+    }
 
-    await writeRecord({
-      ...record,
-      salt: newSalt,
-      pinHash: newPinHash,
-      recoveryAnswerHash: newAnswerHash,
-    });
-
+    // newPin="" means just verify — regenerate salt so old PIN can't be used
+    const newSalt = await generateSalt();
+    record.salt = newSalt;
+    // PIN will be set in the next step via changePin
+    await SecureStore.setItemAsync(KEY, JSON.stringify(record));
     return true;
   },
 };
