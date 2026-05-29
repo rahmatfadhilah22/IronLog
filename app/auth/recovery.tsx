@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { NumericKeypad } from "../../src/components/numeric-keypad";
 import { PinDots } from "../../src/components/pin-dots";
@@ -8,12 +8,12 @@ import { useAuthStore } from "../../src/stores/auth-store";
 import { themeTokens } from "../../src/core/theme";
 import * as Haptics from "expo-haptics";
 
-type Phase = "question" | "setNew";
+type Phase = "question" | "newPin" | "confirmNew";
 
 const QUESTIONS = [
-  "Nama hewan peliharaan pertama?",
-  "Nama jalan rumah masa kecil?",
-  "Hobi pertama yang kamu sukai?",
+  "What was your first pet's name?",
+  "What street did you grow up on?",
+  "What was your first favorite hobby?",
 ];
 
 export default function PinRecoveryScreen() {
@@ -27,6 +27,7 @@ export default function PinRecoveryScreen() {
   const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     pinAuthService.getRecoveryQuestion().then((q) => {
@@ -37,54 +38,70 @@ export default function PinRecoveryScreen() {
 
   const onSubmitAnswer = async () => {
     if (answer.trim().length < 3) {
-      setError("Min 3 karakter");
+      setError("Answer must be at least 3 characters.");
       return;
     }
+    if (savingRef.current) return;
+    savingRef.current = true;
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const ok = await pinAuthService.resetPinViaRecovery(answer, "TEMP1234");
-    if (ok) {
+    const isCorrect = await pinAuthService.checkRecoveryAnswer(answer);
+    if (isCorrect) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setPhase("setNew");
+      setPhase("newPin");
       setError("");
     } else {
-      setError("Jawaban salah");
+      setError("Incorrect answer.");
       setAnswer("");
     }
+    savingRef.current = false;
   };
 
   const onNewDigit = (digit: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setError("");
 
-    if (phase === "setNew" && newPin.length < 6) {
+    if (phase === "newPin" && newPin.length < 6) {
       const next = newPin + digit;
       setNewPin(next);
-      if (next.length === 6) setTimeout(() => setConfirmPin(""), 80);
-    } else if (phase === "setNew" && confirmPin.length < 6) {
+      if (next.length === 6) setTimeout(() => { setConfirmPin(""); setPhase("confirmNew"); }, 80);
+    } else if (phase === "confirmNew" && confirmPin.length < 6) {
       const next = confirmPin + digit;
       setConfirmPin(next);
       if (next.length === 6) {
         if (next === newPin) {
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           void (async () => {
-            await pinAuthService.changePin("TEMP1234", next);
-            unlock();
-            router.replace("/");
+            const ok = await pinAuthService.resetPinViaRecovery(answer, next);
+            if (ok) {
+              unlock();
+              router.replace("/");
+            } else {
+              setError("Failed to reset PIN.");
+              setSaving(false);
+            }
           })();
         } else {
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          setError("PIN tidak cocok");
+          setError("PIN does not match.");
           setNewPin("");
           setConfirmPin("");
+          setPhase("newPin");
         }
       }
     }
   };
 
+  const [saving, setSaving] = useState(false);
+
   const onBackspace = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (confirmPin.length > 0) setConfirmPin((p) => p.slice(0, -1));
-    else if (newPin.length > 0) setNewPin((p) => p.slice(0, -1));
+    if (phase === "confirmNew" && confirmPin.length > 0) {
+      setConfirmPin((p) => p.slice(0, -1));
+    } else if (phase === "confirmNew" && confirmPin.length === 0 && newPin.length > 0) {
+      setNewPin((p) => p.slice(0, -1));
+    } else if (phase === "newPin" && newPin.length > 0) {
+      setNewPin((p) => p.slice(0, -1));
+    }
   };
 
   if (loading) {
@@ -95,76 +112,58 @@ export default function PinRecoveryScreen() {
     );
   }
 
-  const TEXT_KEYS = "QWERTYUIOPASDFGHJKLZXCVBNM".split("");
-
   return (
     <View style={styles.container}>
-      <View style={styles.topArea}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backLabel}>← Kembali</Text>
-        </Pressable>
+      <View style={phase === "question" ? styles.contentWrap : styles.contentWrapPin}>
+        <View style={styles.topArea}>
+          {phase === "question" && (
+            <>
+              <Text style={styles.title}>Forgot PIN</Text>
+              <Text style={styles.eyebrow}>Answer your recovery question</Text>
+              <Text style={styles.question}>{storedQuestion}</Text>
+              <TextInput
+                style={styles.textInput}
+                value={answer}
+                onChangeText={setAnswer}
+                placeholder="Type your answer"
+                placeholderTextColor={themeTokens.colors.textSecondary}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              <View style={styles.btnRow}>
+                <Pressable onPress={() => router.back()} style={styles.backBtn}>
+                  <Text style={styles.backLabel}>Back</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.verifyBtn, answer.trim().length < 3 && styles.verifyBtnDisabled]}
+                  onPress={onSubmitAnswer}
+                  disabled={answer.trim().length < 3}
+                >
+                  <Text style={styles.verifyLabel}>VERIFY</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
 
-        {phase === "question" && (
-          <>
-            <Text style={styles.title}>Lupa PIN</Text>
-            <Text style={styles.eyebrow}>Jawaban pertanyaan pemulihan</Text>
-            <Text style={styles.question}>{storedQuestion}</Text>
-            <Text style={styles.answerDisplay}>{answer || "(ketik jawaban)"}</Text>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-          </>
-        )}
-
-        {phase === "setNew" && (
-          <>
-            <Text style={styles.title}>
-              {confirmPin.length === 6 && newPin.length === 6 ? "Konfirmasi" : "PIN Baru"}
-            </Text>
-            <Text style={styles.eyebrow}>
-              {newPin.length < 6 ? "Masukkan 6 digit PIN baru" : "Ketik ulang PIN"}
-            </Text>
-            <PinDots filled={confirmPin.length > 0 ? confirmPin.length : newPin.length} />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-          </>
-        )}
+          {(phase === "newPin" || phase === "confirmNew") && (
+            <>
+              <Text style={styles.eyebrow}>RESET PIN</Text>
+              <Text style={styles.title}>
+                {phase === "confirmNew" ? "Confirm PIN" : "New PIN"}
+              </Text>
+              <Text style={styles.eyebrow2}>
+                {phase === "newPin" ? "Enter your new 6-digit PIN" : "Re-enter your new PIN"}
+              </Text>
+              <PinDots filled={phase === "confirmNew" ? confirmPin.length : newPin.length} />
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+            </>
+          )}
+        </View>
       </View>
 
       <View style={styles.keypadArea}>
-        {phase === "question" ? (
-          <View style={styles.textKeypad}>
-            {["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM⌫"].map((row, ri) => (
-              <View key={ri} style={styles.textRow}>
-                {row.split("").map((k) => {
-                  const isBack = k === "⌫";
-                  return (
-                    <Pressable
-                      key={k}
-                      style={[styles.textKey, isBack && styles.textKeyBack]}
-                      onPress={() => {
-                        if (isBack) {
-                          setAnswer((a) => a.slice(0, -1));
-                        } else {
-                          setAnswer((a) => a + k.toLowerCase());
-                        }
-                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                    >
-                      <Text style={[styles.textKeyLabel, isBack && styles.textKeyLabelBack]}>
-                        {k}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ))}
-            <Pressable
-              style={[styles.goBtn, answer.trim().length < 3 && styles.goBtnDisabled]}
-              onPress={onSubmitAnswer}
-              disabled={answer.trim().length < 3}
-            >
-              <Text style={styles.goLabel}>VERIFIKASI →</Text>
-            </Pressable>
-          </View>
-        ) : (
+        {(phase === "newPin" || phase === "confirmNew") && (
           <NumericKeypad onDigit={onNewDigit} onBackspace={onBackspace} />
         )}
       </View>
@@ -173,24 +172,55 @@ export default function PinRecoveryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeTokens.colors.background, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: themeTokens.colors.background },
   loading: { flex: 1, backgroundColor: themeTokens.colors.background, alignItems: "center", justifyContent: "center" },
+  contentWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  contentWrapPin: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingBottom: 32,
+  },
   topArea: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
-  backBtn: { position: "absolute", top: 12, left: 12, zIndex: 1 },
-  backLabel: { color: themeTokens.colors.textSecondary, fontSize: 12, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
+  backBtn: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: themeTokens.colors.surfaceHigh,
+  },
+  backLabel: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
   title: { color: themeTokens.colors.textPrimary, fontSize: 26, fontWeight: "800", textTransform: "uppercase", marginTop: 24 },
   eyebrow: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
+  eyebrow2: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
   question: { color: themeTokens.colors.textPrimary, fontSize: 15, fontWeight: "600", textAlign: "center", paddingHorizontal: 8 },
-  answerDisplay: { color: themeTokens.colors.textPrimary, fontSize: 20, fontWeight: "600", letterSpacing: 1 },
+  textInput: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontWeight: "600",
+    color: themeTokens.colors.textPrimary,
+    width: "100%",
+    maxWidth: 300,
+    textAlign: "center",
+  },
   error: { color: themeTokens.colors.danger, fontSize: 12, fontWeight: "700", textTransform: "uppercase" },
-  keypadArea: { flex: 1, justifyContent: "flex-end", alignItems: "center", paddingBottom: 48 },
-  textKeypad: { alignItems: "center", gap: 6, paddingHorizontal: 16 },
-  textRow: { flexDirection: "row", gap: 6 },
-  textKey: { width: 34, height: 46, backgroundColor: themeTokens.colors.surfaceLow, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  textKeyBack: { backgroundColor: themeTokens.colors.surfaceHigh },
-  textKeyLabel: { color: themeTokens.colors.textPrimary, fontSize: 14, fontWeight: "600" },
-  textKeyLabelBack: { fontSize: 18, color: themeTokens.colors.textSecondary },
-  goBtn: { backgroundColor: themeTokens.colors.accentPrimary, borderRadius: 8, paddingHorizontal: 28, paddingVertical: 14, marginTop: 12 },
-  goBtnDisabled: { opacity: 0.35 },
-  goLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
+  verifyBtn: { backgroundColor: themeTokens.colors.accentPrimary, borderRadius: 8, paddingHorizontal: 32, paddingVertical: 14, marginTop: 4 },
+  verifyBtnDisabled: { opacity: 0.35 },
+  verifyLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
+  btnRow: { flexDirection: "row", gap: 10, marginTop: 4, alignItems: "center" },
+  keypadArea: { justifyContent: "center", alignItems: "center", paddingBottom: 48 },
 });
