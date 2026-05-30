@@ -28,7 +28,8 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
           </View>
         )}
         <View style={styles.photoOverlay}>
-          <Text style={styles.titleHeadline}>WORKOUT COMPLETE</Text>
+          <Text style={styles.titleEyebrow}>WORKOUT</Text>
+          <Text style={styles.titleHeadline}>COMPLETE</Text>
           <View style={styles.titleBadge}>
             <Text style={styles.titleBadgeText} numberOfLines={1}>
               {summary.title.toUpperCase()}
@@ -160,21 +161,31 @@ const styles = StyleSheet.create({
   },
   photoOverlay: {
     position: "absolute",
-    bottom: 0,
+    top: "30%",
     left: 0,
-    right: 0,
     padding: 12,
-    gap: 8,
+    gap: 2,
+  },
+  titleEyebrow: {
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   titleHeadline: {
     color: themeTokens.colors.textPrimary,
-    fontSize: 18,
+    fontSize: 32,
     fontWeight: "900",
     textTransform: "uppercase",
     letterSpacing: 1,
     textShadowColor: "rgba(0,0,0,0.8)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+    marginBottom: 6,
   },
   titleBadge: {
     backgroundColor: themeTokens.colors.accentPrimary,
