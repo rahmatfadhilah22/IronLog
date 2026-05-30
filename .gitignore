@@ -14,6 +14,8 @@ coverage/
 
 /design-reference
 
+/prompts
+
 # Native / bundler artifacts
 *.apk
 *.aab
