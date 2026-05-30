@@ -133,6 +133,7 @@ export default function RootLayout() {
           <Stack.Screen name="routines/[routineId]" options={{ title: "Routine Detail" }} />
           <Stack.Screen name="workout/[workoutId]" options={{ title: "Active Workout" }} />
           <Stack.Screen name="workout/summary" options={{ title: "Workout Summary" }} />
+          <Stack.Screen name="workout/share" options={{ headerShown: false }} />
           <Stack.Screen name="exercise/[exerciseId]" options={{ title: "Exercise Insights" }} />
           <Stack.Screen name="body-metrics" options={{ title: "Body Metrics" }} />
           <Stack.Screen
