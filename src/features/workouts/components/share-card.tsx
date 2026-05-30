@@ -31,26 +31,24 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
 
       <View style={styles.titleSection}>
         <Text style={styles.titleEyebrow}>MISSION ACCOMPLISHED</Text>
-        <Text style={styles.titleMain}>
+        <Text style={styles.titleMain} numberOfLines={1}>
           {summary.title.toUpperCase()}
         </Text>
       </View>
 
       <View style={styles.metricsSection}>
         <View style={styles.metricsRow}>
-          <View style={[styles.metricCell, styles.metricCellLeft]}>
+          <View style={styles.metricCell}>
             <Text style={styles.metricLabel}>TOTAL VOLUME</Text>
-            <Text style={styles.metricValueLarge}>
+            <Text style={styles.metricValue}>
               {Math.round(summary.totalVolume).toLocaleString()}
-            </Text>
-            <Text style={styles.metricUnit}>
-              {summary.totalVolumeUnit.toUpperCase()}
+              <Text style={styles.metricUnit}> {summary.totalVolumeUnit.toUpperCase()}</Text>
             </Text>
           </View>
           <View style={styles.metricDivider} />
-          <View style={[styles.metricCell, styles.metricCellRight]}>
+          <View style={styles.metricCell}>
             <Text style={styles.metricLabel}>DURATION</Text>
-            <Text style={styles.metricValueLarge}>
+            <Text style={styles.metricValue}>
               {formatDurationMinutes(summary.durationSeconds)}
             </Text>
           </View>
@@ -59,18 +57,16 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
         <View style={styles.metricsRowDivider} />
 
         <View style={styles.metricsRow}>
-          <View style={[styles.metricCell, styles.metricCellLeft]}>
+          <View style={styles.metricCell}>
             <Text style={styles.metricLabel}>TOTAL SETS</Text>
-            <Text style={styles.metricValue}>
-              {summary.totalSets}
-            </Text>
+            <Text style={styles.metricValue}>{summary.totalSets}</Text>
           </View>
           <View style={styles.metricDivider} />
-          <View style={[styles.metricCell, styles.metricCellRight]}>
+          <View style={styles.metricCell}>
             <Text style={styles.metricLabel}>TOP SET</Text>
             {summary.topSet ? (
               <>
-                <Text style={styles.metricValueSmall}>
+                <Text style={styles.metricValue}>
                   {formatWeight(summary.topSet.weight)}{" "}
                   {summary.topSet.unit.toUpperCase()} {"\u00D7"} {summary.topSet.reps}
                 </Text>
@@ -79,7 +75,7 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
                 </Text>
               </>
             ) : (
-              <Text style={styles.metricSubtext}>No top set recorded</Text>
+              <Text style={styles.metricSubtext}>---</Text>
             )}
           </View>
         </View>
@@ -117,7 +113,7 @@ function formatWeight(value: number): string {
 }
 
 const CARD_WIDTH = 320;
-const CARD_HEIGHT = 500;
+const CARD_HEIGHT = 540;
 
 const styles = StyleSheet.create({
   card: {
@@ -149,7 +145,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   photoArea: {
-    height: (CARD_HEIGHT - 36) * 0.45,
+    flex: 1,
     backgroundColor: themeTokens.colors.backgroundDeep,
   },
   photo: {
@@ -164,89 +160,69 @@ const styles = StyleSheet.create({
   titleSection: {
     backgroundColor: themeTokens.colors.surfaceLow,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     gap: 2,
   },
   titleEyebrow: {
     color: themeTokens.colors.accentPrimary,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
   titleMain: {
     color: themeTokens.colors.textPrimary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   metricsSection: {
-    flex: 1,
-    backgroundColor: themeTokens.colors.surfaceLow,
-    paddingHorizontal: 12,
-    paddingBottom: 12,
+    backgroundColor: themeTokens.colors.accentPrimary,
+    padding: 12,
+    gap: 6,
   },
   metricsRow: {
     flexDirection: "row",
-    flex: 1,
   },
   metricsRowDivider: {
     height: 1,
-    backgroundColor: themeTokens.colors.surfaceHigh,
-    marginVertical: 6,
+    backgroundColor: themeTokens.colors.backgroundDeep,
+    opacity: 0.25,
   },
   metricCell: {
     flex: 1,
-    justifyContent: "center",
-    paddingVertical: 6,
-  },
-  metricCellLeft: {
-    alignItems: "flex-start",
-    paddingRight: 8,
-  },
-  metricCellRight: {
-    alignItems: "flex-start",
-    paddingLeft: 8,
+    alignItems: "center",
   },
   metricDivider: {
     width: 1,
-    backgroundColor: themeTokens.colors.surfaceHigh,
+    backgroundColor: themeTokens.colors.backgroundDeep,
+    opacity: 0.25,
   },
   metricLabel: {
-    color: themeTokens.colors.textSecondary,
-    fontSize: 9,
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 8,
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
     marginBottom: 3,
-  },
-  metricValueLarge: {
-    color: themeTokens.colors.textPrimary,
-    fontSize: 24,
-    fontWeight: "800",
+    opacity: 0.8,
   },
   metricValue: {
-    color: themeTokens.colors.textPrimary,
-    fontSize: 22,
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 17,
     fontWeight: "800",
-  },
-  metricValueSmall: {
-    color: themeTokens.colors.textPrimary,
-    fontSize: 16,
-    fontWeight: "800",
+    textTransform: "uppercase",
   },
   metricUnit: {
-    color: themeTokens.colors.textSecondary,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
-    marginTop: 2,
   },
   metricSubtext: {
-    color: themeTokens.colors.textSecondary,
+    color: themeTokens.colors.backgroundDeep,
     fontSize: 10,
     fontWeight: "600",
-    letterSpacing: 0.3,
-    marginTop: 3,
+    opacity: 0.75,
+    marginTop: 2,
   },
 });
