@@ -1,5 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import {
+  Image,
+  PanResponder,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { themeTokens } from "../../../core/theme";
 import type { WorkoutSummary } from "../../../types/workout";
@@ -9,8 +16,45 @@ export type ShareCardProps = {
   photoUri: string | null;
 };
 
+const CARD_WIDTH = 320;
+export const CARD_HEIGHT = 540;
+const HEADER_H = 32;
+const METRICS_H = 110;
+const PHOTO_H = CARD_HEIGHT - HEADER_H - METRICS_H;
+const OVERLAY_MAX_X = CARD_WIDTH - 160;
+const OVERLAY_MAX_Y = PHOTO_H - 80;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 export function ShareCard({ summary, photoUri }: ShareCardProps) {
   const dateLabel = formatShareDate(summary.finishedAt);
+
+  const [dragX, setDragX] = useState(PHOTO_H * 0.25);
+  const [dragY, setDragY] = useState(4);
+  const dragPosRef = useRef({ x: PHOTO_H * 0.25, y: 4 });
+  const gestureOrigin = useRef({ x: PHOTO_H * 0.25, y: 4 });
+
+  dragPosRef.current = { x: dragX, y: dragY };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 3 || Math.abs(g.dy) > 3,
+      onPanResponderGrant: () => {
+        gestureOrigin.current.x = dragPosRef.current.x;
+        gestureOrigin.current.y = dragPosRef.current.y;
+      },
+      onPanResponderMove: (_, gesture) => {
+        const newX = clamp(gestureOrigin.current.x + gesture.dx, 0, OVERLAY_MAX_X);
+        const newY = clamp(gestureOrigin.current.y + gesture.dy, 0, OVERLAY_MAX_Y);
+        setDragX(newX);
+        setDragY(newY);
+      },
+    }),
+  ).current;
 
   return (
     <View style={styles.card}>
@@ -27,7 +71,13 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
             <Ionicons name="barbell" size={64} color={themeTokens.colors.accentPrimary} />
           </View>
         )}
-        <View style={styles.photoOverlay}>
+        <View
+          style={[
+            styles.photoOverlay,
+            { left: dragX, top: dragY },
+          ]}
+          {...panResponder.panHandlers}
+        >
           <Text style={styles.titleEyebrow}>WORKOUT</Text>
           <Text style={styles.titleHeadline}>COMPLETE</Text>
           <View style={styles.titleBadge}>
@@ -114,9 +164,6 @@ function formatWeight(value: number): string {
   return value.toFixed(1);
 }
 
-const CARD_WIDTH = 320;
-const CARD_HEIGHT = 540;
-
 const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
@@ -161,8 +208,6 @@ const styles = StyleSheet.create({
   },
   photoOverlay: {
     position: "absolute",
-    top: "30%",
-    left: 0,
     paddingLeft: 4,
     paddingRight: 12,
     paddingTop: 12,
