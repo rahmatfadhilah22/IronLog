@@ -1,2 +1,2 @@
 export { RoutineEditorScreen } from "./routines/routine-editor-screen";
-export { ActiveWorkoutScreen, WorkoutSummaryScreen } from "./workouts";
+export { ActiveWorkoutScreen, ShareWorkoutScreen, WorkoutSummaryScreen } from "./workouts";
