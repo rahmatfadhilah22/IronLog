@@ -1,0 +1,64 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="126" y="126" width="772" height="772" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="bg" x1="100" y1="92" x2="924" y2="944" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A1A1C"/>
+      <stop offset="1" stop-color="#0B0B0C"/>
+    </linearGradient>
+    <linearGradient id="lime" x1="322" y1="278" x2="538" y2="758" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8FF00"/>
+      <stop offset="1" stop-color="#C6FF00"/>
+    </linearGradient>
+    <linearGradient id="white" x1="560" y1="372" x2="770" y2="742" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E7E7EA"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="#131313"/>
+  <rect x="90" y="90" width="844" height="844" rx="186" fill="url(#bg)" stroke="#3C3C40" stroke-width="8"/>
+
+  <g opacity="0.16">
+    <circle cx="220" cy="470" r="2" fill="#D6FF3B"/>
+    <circle cx="220" cy="492" r="2" fill="#D6FF3B"/>
+    <circle cx="220" cy="514" r="2" fill="#D6FF3B"/>
+    <circle cx="220" cy="536" r="2" fill="#D6FF3B"/>
+    <circle cx="220" cy="558" r="2" fill="#D6FF3B"/>
+    <circle cx="242" cy="470" r="2" fill="#D6FF3B"/>
+    <circle cx="242" cy="492" r="2" fill="#D6FF3B"/>
+    <circle cx="242" cy="514" r="2" fill="#D6FF3B"/>
+    <circle cx="242" cy="536" r="2" fill="#D6FF3B"/>
+    <circle cx="242" cy="558" r="2" fill="#D6FF3B"/>
+    <circle cx="264" cy="470" r="2" fill="#D6FF3B"/>
+    <circle cx="264" cy="492" r="2" fill="#D6FF3B"/>
+    <circle cx="264" cy="514" r="2" fill="#D6FF3B"/>
+    <circle cx="264" cy="536" r="2" fill="#D6FF3B"/>
+    <circle cx="264" cy="558" r="2" fill="#D6FF3B"/>
+    <circle cx="286" cy="470" r="2" fill="#D6FF3B"/>
+    <circle cx="286" cy="492" r="2" fill="#D6FF3B"/>
+    <circle cx="286" cy="514" r="2" fill="#D6FF3B"/>
+    <circle cx="286" cy="536" r="2" fill="#D6FF3B"/>
+    <circle cx="286" cy="558" r="2" fill="#D6FF3B"/>
+  </g>
+
+  <circle cx="512" cy="512" r="292" stroke="#DFFF00" stroke-width="18" filter="url(#glow)"/>
+
+  <path d="M336 324H596L574 392H498L420 662H496L472 730H246L270 662H346L424 392H314L336 324Z" fill="url(#lime)"/>
+  <path d="M632 388H720L634 674H820L796 730H516L540 662H596L680 420H608L632 388Z" fill="url(#white)"/>
+
+  <g transform="translate(0 34) skewX(-14)">
+    <path d="M328 736H368L352 784H312L328 736Z" fill="url(#lime)"/>
+    <path d="M380 736H452L446 754H414L404 784H364L380 736Z" fill="url(#lime)"/>
+    <path d="M466 736H506L488 784H448L466 736Z" fill="url(#lime)"/>
+    <path d="M522 736H594L588 754H556L546 784H506L522 736Z" fill="url(#lime)"/>
+    <path d="M616 736H656L638 784H598L616 736Z" fill="url(#white)"/>
+    <path d="M668 736H740L734 754H702L692 784H652L668 736Z" fill="url(#white)"/>
+    <path d="M752 736H824L818 754H786L776 784H736L752 736Z" fill="url(#white)"/>
+  </g>
+</svg>
