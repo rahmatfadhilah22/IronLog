@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: "30%",
     left: 0,
-    paddingLeft: 8,
+    paddingLeft: 4,
     paddingRight: 12,
     paddingTop: 12,
     paddingBottom: 12,
