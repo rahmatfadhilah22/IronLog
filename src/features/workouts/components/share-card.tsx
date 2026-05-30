@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   metricsSection: {
-    backgroundColor: themeTokens.colors.accentPrimary,
+    backgroundColor: themeTokens.colors.surfaceLow,
     padding: 12,
     gap: 6,
   },
@@ -187,8 +187,7 @@ const styles = StyleSheet.create({
   },
   metricsRowDivider: {
     height: 1,
-    backgroundColor: themeTokens.colors.backgroundDeep,
-    opacity: 0.25,
+    backgroundColor: themeTokens.colors.surfaceHigh,
   },
   metricCell: {
     flex: 1,
@@ -196,33 +195,31 @@ const styles = StyleSheet.create({
   },
   metricDivider: {
     width: 1,
-    backgroundColor: themeTokens.colors.backgroundDeep,
-    opacity: 0.25,
+    backgroundColor: themeTokens.colors.surfaceHigh,
   },
   metricLabel: {
-    color: themeTokens.colors.backgroundDeep,
-    fontSize: 8,
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 9,
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
     marginBottom: 3,
-    opacity: 0.8,
   },
   metricValue: {
-    color: themeTokens.colors.backgroundDeep,
+    color: themeTokens.colors.textPrimary,
     fontSize: 17,
     fontWeight: "800",
     textTransform: "uppercase",
   },
   metricUnit: {
+    color: themeTokens.colors.textSecondary,
     fontSize: 12,
     fontWeight: "700",
   },
   metricSubtext: {
-    color: themeTokens.colors.backgroundDeep,
+    color: themeTokens.colors.textSecondary,
     fontSize: 10,
     fontWeight: "600",
-    opacity: 0.75,
     marginTop: 2,
   },
 });
