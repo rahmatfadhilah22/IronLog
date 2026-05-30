@@ -21,7 +21,7 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
 
       <View style={styles.photoArea}>
         {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="contain" />
+          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
         ) : (
           <View style={styles.photoPlaceholder}>
             <Ionicons name="barbell" size={64} color={themeTokens.colors.accentPrimary} />
