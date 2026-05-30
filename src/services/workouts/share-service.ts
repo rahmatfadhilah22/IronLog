@@ -10,7 +10,7 @@ function tempFileUri(): string {
 }
 
 export async function captureShareCard(
-  viewShotRef: React.RefObject<ViewShot>,
+  viewShotRef: React.RefObject<ViewShot | null>,
 ): Promise<string> {
   if (!viewShotRef.current?.capture) {
     throw new Error("ViewShot ref is not attached.");
