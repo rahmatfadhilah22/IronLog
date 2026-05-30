@@ -112,11 +112,13 @@ export default function PinRecoveryScreen() {
     );
   }
 
+  const isPinPhase = phase === "newPin" || phase === "confirmNew";
+
   return (
     <View style={styles.container}>
-      <View style={phase === "question" ? styles.contentWrap : styles.contentWrapPin}>
-        <View style={styles.topArea}>
-          {phase === "question" && (
+      <View style={[styles.contentWrap, isPinPhase && styles.contentWrapPin]}>
+        <View style={[styles.topArea, isPinPhase && styles.topAreaPin]}>
+          {phase === "question" ? (
             <>
               <Text style={styles.title}>Forgot PIN</Text>
               <Text style={styles.eyebrow}>Answer your recovery question</Text>
@@ -144,9 +146,7 @@ export default function PinRecoveryScreen() {
                 </Pressable>
               </View>
             </>
-          )}
-
-          {(phase === "newPin" || phase === "confirmNew") && (
+          ) : (
             <>
               <Text style={styles.eyebrow}>RESET PIN</Text>
               <Text style={styles.titlePin}>
@@ -162,11 +162,11 @@ export default function PinRecoveryScreen() {
         </View>
       </View>
 
-      <View style={styles.keypadArea}>
-        {(phase === "newPin" || phase === "confirmNew") && (
+      {isPinPhase && (
+        <View style={styles.keypadArea}>
           <NumericKeypad onDigit={onNewDigit} onBackspace={onBackspace} />
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -184,7 +184,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  topArea: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
+  topArea: { alignItems: "center", gap: 10, paddingHorizontal: 24 },
+  topAreaPin: { paddingTop: 48, marginTop: 48 },
   backBtn: {
     backgroundColor: themeTokens.colors.surfaceLow,
     borderRadius: 8,
@@ -222,5 +223,5 @@ const styles = StyleSheet.create({
   verifyBtnDisabled: { opacity: 0.35 },
   verifyLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
   btnRow: { flexDirection: "row", gap: 10, marginTop: 4, alignItems: "center" },
-  keypadArea: { flex: 1, justifyContent: "flex-start", alignItems: "center", paddingTop: 40, paddingBottom: 48 },
+  keypadArea: { flex: 1, justifyContent: "flex-start", alignItems: "center", marginTop: -48, paddingBottom: 48 },
 });
