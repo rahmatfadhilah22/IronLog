@@ -163,7 +163,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: "30%",
     left: 0,
-    padding: 12,
+    paddingLeft: 8,
+    paddingRight: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
     gap: 2,
   },
   titleEyebrow: {
