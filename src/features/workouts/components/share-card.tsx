@@ -21,7 +21,7 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
 
       <View style={styles.photoArea}>
         {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
+          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="contain" />
         ) : (
           <View style={styles.photoPlaceholder}>
             <Ionicons name="barbell" size={64} color={themeTokens.colors.accentPrimary} />
@@ -37,45 +37,52 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
       </View>
 
       <View style={styles.metricsSection}>
-        <View style={styles.metricColumn}>
-          <Text style={styles.metricLabel}>VOLUME</Text>
-          <Text style={styles.metricValue}>
-            {Math.round(summary.totalVolume).toLocaleString()}
-          </Text>
-          <Text style={styles.metricUnit}>
-            {summary.totalVolumeUnit.toUpperCase()}
-          </Text>
+        <View style={styles.metricsRow}>
+          <View style={[styles.metricCell, styles.metricCellLeft]}>
+            <Text style={styles.metricLabel}>TOTAL VOLUME</Text>
+            <Text style={styles.metricValueLarge}>
+              {Math.round(summary.totalVolume).toLocaleString()}
+            </Text>
+            <Text style={styles.metricUnit}>
+              {summary.totalVolumeUnit.toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.metricDivider} />
+          <View style={[styles.metricCell, styles.metricCellRight]}>
+            <Text style={styles.metricLabel}>DURATION</Text>
+            <Text style={styles.metricValueLarge}>
+              {formatDurationMinutes(summary.durationSeconds)}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.metricColumn}>
-          <Text style={styles.metricLabel}>DURATION</Text>
-          <Text style={styles.metricValue}>
-            {formatDurationMinutes(summary.durationSeconds)}
-          </Text>
-        </View>
+        <View style={styles.metricsRowDivider} />
 
-        <View style={styles.metricColumn}>
-          <Text style={styles.metricLabel}>SETS</Text>
-          <Text style={styles.metricValue}>{summary.totalSets}</Text>
+        <View style={styles.metricsRow}>
+          <View style={[styles.metricCell, styles.metricCellLeft]}>
+            <Text style={styles.metricLabel}>TOTAL SETS</Text>
+            <Text style={styles.metricValue}>
+              {summary.totalSets}
+            </Text>
+          </View>
+          <View style={styles.metricDivider} />
+          <View style={[styles.metricCell, styles.metricCellRight]}>
+            <Text style={styles.metricLabel}>TOP SET</Text>
+            {summary.topSet ? (
+              <>
+                <Text style={styles.metricValueSmall}>
+                  {formatWeight(summary.topSet.weight)}{" "}
+                  {summary.topSet.unit.toUpperCase()} {"\u00D7"} {summary.topSet.reps}
+                </Text>
+                <Text style={styles.metricSubtext}>
+                  {summary.topSet.exerciseName.toUpperCase()}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.metricSubtext}>No top set recorded</Text>
+            )}
+          </View>
         </View>
-      </View>
-
-      {summary.topSet && (
-        <View style={styles.topSetSection}>
-          <Text style={styles.topSetLabel}>TOP SET</Text>
-          <Text style={styles.topSetValue}>
-            {formatWeight(summary.topSet.weight)}{" "}
-            {summary.topSet.unit.toUpperCase()} {"\u00D7"} {summary.topSet.reps}
-          </Text>
-          <Text style={styles.topSetName}>
-            {summary.topSet.exerciseName.toUpperCase()}
-            {summary.topSet.rpe ? `  \u2022  RPE ${summary.topSet.rpe}` : ""}
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>ironlog.app</Text>
       </View>
     </View>
   );
@@ -110,7 +117,7 @@ function formatWeight(value: number): string {
 }
 
 const CARD_WIDTH = 320;
-const CARD_HEIGHT = 540;
+const CARD_HEIGHT = 500;
 
 const styles = StyleSheet.create({
   card: {
@@ -144,7 +151,6 @@ const styles = StyleSheet.create({
   photoArea: {
     height: (CARD_HEIGHT - 36) * 0.45,
     backgroundColor: themeTokens.colors.backgroundDeep,
-    overflow: "hidden",
   },
   photo: {
     width: "100%",
@@ -176,69 +182,71 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   metricsSection: {
-    flexDirection: "row",
+    flex: 1,
     backgroundColor: themeTokens.colors.surfaceLow,
     paddingHorizontal: 12,
-    paddingBottom: 10,
-    gap: 8,
+    paddingBottom: 12,
   },
-  metricColumn: {
+  metricsRow: {
+    flexDirection: "row",
     flex: 1,
-    alignItems: "center",
+  },
+  metricsRowDivider: {
+    height: 1,
+    backgroundColor: themeTokens.colors.surfaceHigh,
+    marginVertical: 6,
+  },
+  metricCell: {
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: 6,
+  },
+  metricCellLeft: {
+    alignItems: "flex-start",
+    paddingRight: 8,
+  },
+  metricCellRight: {
+    alignItems: "flex-start",
+    paddingLeft: 8,
+  },
+  metricDivider: {
+    width: 1,
+    backgroundColor: themeTokens.colors.surfaceHigh,
   },
   metricLabel: {
     color: themeTokens.colors.textSecondary,
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
-    marginBottom: 2,
+    marginBottom: 3,
+  },
+  metricValueLarge: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 24,
+    fontWeight: "800",
   },
   metricValue: {
     color: themeTokens.colors.textPrimary,
     fontSize: 22,
     fontWeight: "800",
   },
+  metricValueSmall: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 16,
+    fontWeight: "800",
+  },
   metricUnit: {
     color: themeTokens.colors.textSecondary,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "700",
-    marginTop: 1,
+    marginTop: 2,
   },
-  topSetSection: {
-    backgroundColor: themeTokens.colors.surfaceHigh,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 2,
-  },
-  topSetLabel: {
-    color: themeTokens.colors.accentPrimary,
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  topSetValue: {
-    color: themeTokens.colors.textPrimary,
-    fontSize: 18,
-    fontWeight: "800",
-    textTransform: "uppercase",
-  },
-  topSetName: {
+  metricSubtext: {
     color: themeTokens.colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  footer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  footerText: {
-    color: themeTokens.colors.accentPrimary,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 0.3,
+    marginTop: 3,
   },
 });
