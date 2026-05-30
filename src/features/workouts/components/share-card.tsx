@@ -27,14 +27,13 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
             <Ionicons name="barbell" size={64} color={themeTokens.colors.accentPrimary} />
           </View>
         )}
-      </View>
-
-      <View style={styles.titleSection}>
-        <Text style={styles.titleHeadline}>WORKOUT COMPLETE</Text>
-        <View style={styles.titleBadge}>
-          <Text style={styles.titleBadgeText} numberOfLines={1}>
-            {summary.title.toUpperCase()}
-          </Text>
+        <View style={styles.photoOverlay}>
+          <Text style={styles.titleHeadline}>WORKOUT COMPLETE</Text>
+          <View style={styles.titleBadge}>
+            <Text style={styles.titleBadgeText} numberOfLines={1}>
+              {summary.title.toUpperCase()}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -159,11 +158,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  titleSection: {
-    backgroundColor: themeTokens.colors.surfaceLow,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    alignItems: "center",
+  photoOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
     gap: 8,
   },
   titleHeadline: {
@@ -172,14 +172,16 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     textTransform: "uppercase",
     letterSpacing: 1,
-    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   titleBadge: {
     backgroundColor: themeTokens.colors.accentPrimary,
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    alignSelf: "center",
+    alignSelf: "flex-start",
   },
   titleBadgeText: {
     color: themeTokens.colors.backgroundDeep,
