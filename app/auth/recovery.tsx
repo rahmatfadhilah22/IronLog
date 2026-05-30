@@ -180,10 +180,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   contentWrapPin: {
-    flex: 3,
-    justifyContent: "flex-end",
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 12,
   },
   topArea: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
   backBtn: {
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
-  title: { color: themeTokens.colors.textPrimary, fontSize: 26, fontWeight: "800", textTransform: "uppercase", marginTop: 24 },
+  title: { color: themeTokens.colors.accentPrimary, fontSize: 26, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2 },
   titlePin: { color: themeTokens.colors.accentPrimary, fontSize: 32, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase" },
   eyebrow: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
   eyebrow2: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
@@ -223,5 +222,5 @@ const styles = StyleSheet.create({
   verifyBtnDisabled: { opacity: 0.35 },
   verifyLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
   btnRow: { flexDirection: "row", gap: 10, marginTop: 4, alignItems: "center" },
-  keypadArea: { flex: 2, justifyContent: "flex-start", alignItems: "center", paddingTop: 40, paddingBottom: 48 },
+  keypadArea: { flex: 1, justifyContent: "flex-start", alignItems: "center", paddingTop: 40, paddingBottom: 48 },
 });
