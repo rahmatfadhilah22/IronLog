@@ -133,18 +133,13 @@ export default function PinRecoveryScreen() {
                 autoCorrect={false}
               />
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              <View style={styles.btnRow}>
-                <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                  <Text style={styles.backLabel}>Back</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.verifyBtn, answer.trim().length < 3 && styles.verifyBtnDisabled]}
-                  onPress={onSubmitAnswer}
-                  disabled={answer.trim().length < 3}
-                >
-                  <Text style={styles.verifyLabel}>VERIFY</Text>
-                </Pressable>
-              </View>
+              <Pressable
+                style={[styles.verifyBtn, answer.trim().length < 3 && styles.verifyBtnDisabled]}
+                onPress={onSubmitAnswer}
+                disabled={answer.trim().length < 3}
+              >
+                <Text style={styles.verifyLabel}>VERIFY</Text>
+              </Pressable>
             </>
           ) : (
             <>
@@ -186,21 +181,6 @@ const styles = StyleSheet.create({
   },
   topArea: { alignItems: "center", gap: 10, paddingHorizontal: 24 },
   topAreaPin: { paddingTop: 48, marginTop: 48 },
-  backBtn: {
-    backgroundColor: themeTokens.colors.surfaceLow,
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: themeTokens.colors.surfaceHigh,
-  },
-  backLabel: {
-    color: themeTokens.colors.textPrimary,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
   title: { color: themeTokens.colors.accentPrimary, fontSize: 26, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2 },
   titlePin: { color: themeTokens.colors.accentPrimary, fontSize: 32, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase" },
   eyebrow: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
@@ -222,6 +202,5 @@ const styles = StyleSheet.create({
   verifyBtn: { backgroundColor: themeTokens.colors.accentPrimary, borderRadius: 8, paddingHorizontal: 32, paddingVertical: 14, marginTop: 4 },
   verifyBtnDisabled: { opacity: 0.35 },
   verifyLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
-  btnRow: { flexDirection: "row", gap: 10, marginTop: 4, alignItems: "center" },
   keypadArea: { flex: 1, justifyContent: "flex-start", alignItems: "center", marginTop: -48, paddingBottom: 48 },
 });
