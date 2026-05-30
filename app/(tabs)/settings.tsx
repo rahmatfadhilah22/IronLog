@@ -22,7 +22,7 @@ import { backupService, getBackupWarningText } from "../../src/services/backup";
 import { appSettingsService } from "../../src/services/settings";
 import type { OneRmFormula, PreferredUnit } from "../../src/types/settings";
 
-const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
+const APP_VERSION = Constants.expoConfig?.version ?? "0.2.3";
 const NATIVE_BUILD = Application.nativeBuildVersion;
 
 export default function SettingsScreen() {
@@ -281,12 +281,12 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Security</Text>
         <ActionButton
           label="Change PIN"
-          description="Ubah PIN akses aplikasi"
+          description="Update your app access PIN"
           onPress={() => router.push("/change-pin")}
         />
         <ActionButton
           label="Change Recovery Question"
-          description="Ubah pertanyaan pemulihan"
+          description="Update your recovery question"
           onPress={() => router.push("/change-recovery")}
         />
       </View>
