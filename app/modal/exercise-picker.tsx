@@ -102,8 +102,8 @@ export default function ExercisePickerScreen() {
           return;
         }
         setExercises(result.exercises);
-        setMuscleGroups(result.muscleGroups);
-        setEquipmentTypes(result.equipmentTypes);
+        setMuscleGroups(result.muscleGroups.filter((g) => g !== "Cardio"));
+        setEquipmentTypes(result.equipmentTypes.filter((t) => t !== "Cardio" && t !== "Treadmill"));
       })
       .catch((requestError: unknown) => {
         if (isActive) {
