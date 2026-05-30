@@ -127,6 +127,8 @@ export default function RootLayout() {
 
         <Stack.Protected guard={authState === "ready"}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="change-pin" options={{ headerShown: false }} />
+          <Stack.Screen name="change-recovery" options={{ headerShown: false }} />
           <Stack.Screen name="routines/create" options={{ title: "Create Routine" }} />
           <Stack.Screen name="routines/[routineId]" options={{ title: "Routine Detail" }} />
           <Stack.Screen name="workout/[workoutId]" options={{ title: "Active Workout" }} />

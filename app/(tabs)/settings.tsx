@@ -282,12 +282,12 @@ export default function SettingsScreen() {
         <ActionButton
           label="Change PIN"
           description="Ubah PIN akses aplikasi"
-          onPress={() => router.push("/auth/change-pin")}
+          onPress={() => router.push("/change-pin")}
         />
         <ActionButton
           label="Change Recovery Question"
           description="Ubah pertanyaan pemulihan"
-          onPress={() => router.push("/auth/change-recovery")}
+          onPress={() => router.push("/change-recovery")}
         />
       </View>
 

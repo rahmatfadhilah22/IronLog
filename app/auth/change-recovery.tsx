@@ -38,7 +38,7 @@ export default function ChangeRecoveryScreen() {
           setPhase("newQuestion");
         } else {
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          setError("PIN salah");
+          setError("Incorrect PIN");
           setCurrentPin("");
         }
       }
@@ -74,92 +74,146 @@ export default function ChangeRecoveryScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topArea}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backLabel}>← Batal</Text>
-        </Pressable>
-
-        {phase === "verify" && (
-          <>
-            <Text style={styles.eyebrow}>VERIFY PIN</Text>
-            <Text style={styles.title}>Enter current PIN</Text>
-            <PinDots filled={currentPin.length} />
-          </>
-        )}
-
-        {phase === "newQuestion" && (
-          <>
-            <Text style={styles.eyebrow}>RECOVERY QUESTION</Text>
-            <Text style={styles.title}>Choose a new question</Text>
-            <View style={styles.questionList}>
-              {QUESTIONS.map((q) => (
-                <Pressable
-                  key={q}
-                  style={[styles.questionChip, selectedQuestion === q && styles.questionChipSelected]}
-                  onPress={() => onSelectQuestion(q)}
-                >
-                  <Text style={[styles.questionChipText, selectedQuestion === q && styles.questionChipTextSelected]}>
-                    {q}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </>
-        )}
-
-        {phase === "newAnswer" && (
-          <>
-            <Text style={styles.eyebrow}>NEW ANSWER</Text>
-            <Text style={styles.question}>{selectedQuestion}</Text>
-            <TextInput
-              style={styles.answerInput}
-              value={answer}
-              onChangeText={setAnswer}
-              placeholder="Type your answer"
-              placeholderTextColor={themeTokens.colors.textSecondary}
-              autoCapitalize="words"
-              autoCorrect={false}
-              returnKeyType="done"
-            />
-          </>
-        )}
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {saving ? <Text style={styles.info}>Saving...</Text> : null}
-      </View>
-
-      <View style={styles.keypadArea}>
-        {phase === "newAnswer" ? (
-          <View style={{ alignItems: "center", gap: 12 }}>
-            <Pressable
-              style={[styles.saveBtn, answer.trim().length < 3 && styles.saveBtnDisabled]}
-              onPress={onSubmitAnswer}
-              disabled={answer.trim().length < 3}
-            >
-              <Text style={styles.saveLabel}>SAVE</Text>
-            </Pressable>
+      {(phase === "verify" || phase === "newQuestion") && (
+        <View style={styles.authContent}>
+          <View style={styles.topArea}>
+            {phase === "verify" ? (
+              <>
+                <Text style={styles.title}>Verify PIN</Text>
+                <Text style={styles.subtitle}>Enter your current PIN</Text>
+                <PinDots filled={currentPin.length} />
+              </>
+            ) : (
+              <>
+                <Text style={styles.title}>Recovery Question</Text>
+                <Text style={styles.subtitle}>Choose a new question</Text>
+                <View style={styles.questionList}>
+                  {QUESTIONS.map((q) => (
+                    <Pressable
+                      key={q}
+                      style={[styles.questionChip, selectedQuestion === q && styles.questionChipSelected]}
+                      onPress={() => onSelectQuestion(q)}
+                    >
+                      <Text style={[styles.questionChipText, selectedQuestion === q && styles.questionChipTextSelected]}>
+                        {q}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            )}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {saving ? <Text style={styles.info}>Saving...</Text> : null}
           </View>
-        ) : (
-          <NumericKeypad onDigit={onDigit} onBackspace={onBackspace} />
-        )}
-      </View>
+        </View>
+      )}
+
+      {phase === "newAnswer" && (
+        <View style={styles.answerContent}>
+          <Text style={styles.title}>New Answer</Text>
+          <Text style={styles.question}>{selectedQuestion}</Text>
+          <TextInput
+            style={styles.answerInput}
+            value={answer}
+            onChangeText={setAnswer}
+            placeholder="Type your answer"
+            placeholderTextColor={themeTokens.colors.textSecondary}
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="done"
+          />
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {saving ? <Text style={styles.info}>Saving...</Text> : null}
+          <Pressable
+            style={[styles.saveBtn, answer.trim().length < 3 && styles.saveBtnDisabled]}
+            onPress={onSubmitAnswer}
+            disabled={answer.trim().length < 3}
+          >
+            <Text style={styles.saveLabel}>SAVE</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {(phase === "verify" || phase === "newQuestion") && (
+        <View style={styles.keypadArea}>
+          {phase === "verify" ? (
+            <NumericKeypad onDigit={onDigit} onBackspace={onBackspace} />
+          ) : null}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeTokens.colors.background, paddingTop: 60 },
-  topArea: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
-  backBtn: { position: "absolute", top: 12, left: 12 },
-  backLabel: { color: themeTokens.colors.textSecondary, fontSize: 12, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
-  eyebrow: { color: themeTokens.colors.accentPrimary, fontSize: 11, fontWeight: "700", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 20 },
-  title: { color: themeTokens.colors.textPrimary, fontSize: 22, fontWeight: "800", textTransform: "uppercase" },
-  questionList: { gap: 10, width: "100%", paddingHorizontal: 8 },
-  questionChip: { backgroundColor: themeTokens.colors.surfaceLow, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
-  questionChipSelected: { backgroundColor: themeTokens.colors.accentPrimary },
-  questionChipText: { color: themeTokens.colors.textSecondary, fontSize: 13, fontWeight: "700" },
-  questionChipTextSelected: { color: themeTokens.colors.backgroundDeep },
-  question: { color: themeTokens.colors.textPrimary, fontSize: 14, fontWeight: "600", textAlign: "center", paddingHorizontal: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: themeTokens.colors.background,
+  },
+  authContent: {
+    flex: 1,
+    justifyContent: "center",
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+  topArea: {
+    alignItems: "center",
+    gap: themeTokens.spacing.sm,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    marginTop: 48,
+  },
+  answerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 24,
+  },
+  title: {
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 32,
+    fontWeight: "800",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    textAlign: "center",
+  },
+  subtitle: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    textAlign: "center",
+  },
+  questionList: {
+    gap: 10,
+    width: "100%",
+    paddingHorizontal: 8,
+  },
+  questionChip: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  questionChipSelected: {
+    backgroundColor: themeTokens.colors.accentPrimary,
+  },
+  questionChipText: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  questionChipTextSelected: {
+    color: themeTokens.colors.backgroundDeep,
+  },
+  question: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingHorizontal: 8,
+  },
   answerInput: {
     backgroundColor: themeTokens.colors.surfaceLow,
     borderRadius: themeTokens.radius.sm,
@@ -172,10 +226,40 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     textAlign: "center",
   },
-  error: { color: themeTokens.colors.danger, fontSize: 12, fontWeight: "700", textTransform: "uppercase" },
-  info: { color: themeTokens.colors.textSecondary, fontSize: 12, fontWeight: "700", textTransform: "uppercase" },
-  keypadArea: { flex: 1, justifyContent: "flex-end", alignItems: "center", paddingBottom: 48 },
-  saveBtn: { backgroundColor: themeTokens.colors.accentPrimary, borderRadius: 8, paddingHorizontal: 32, paddingVertical: 14 },
-  saveBtnDisabled: { opacity: 0.35 },
-  saveLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
+  error: {
+    color: themeTokens.colors.danger,
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  info: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  keypadArea: {
+    flex: 1,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginTop: -48,
+    paddingBottom: 48,
+  },
+  saveBtn: {
+    backgroundColor: themeTokens.colors.accentPrimary,
+    borderRadius: 8,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    marginTop: 8,
+  },
+  saveBtnDisabled: {
+    opacity: 0.35,
+  },
+  saveLabel: {
+    color: themeTokens.colors.backgroundDeep,
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
 });
