@@ -30,10 +30,12 @@ export function ShareCard({ summary, photoUri }: ShareCardProps) {
       </View>
 
       <View style={styles.titleSection}>
-        <Text style={styles.titleEyebrow}>MISSION ACCOMPLISHED</Text>
-        <Text style={styles.titleMain} numberOfLines={1}>
-          {summary.title.toUpperCase()}
-        </Text>
+        <Text style={styles.titleHeadline}>WORKOUT COMPLETE</Text>
+        <View style={styles.titleBadge}>
+          <Text style={styles.titleBadgeText} numberOfLines={1}>
+            {summary.title.toUpperCase()}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.metricsSection}>
@@ -160,22 +162,31 @@ const styles = StyleSheet.create({
   titleSection: {
     backgroundColor: themeTokens.colors.surfaceLow,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 2,
+    paddingVertical: 10,
+    alignItems: "center",
+    gap: 8,
   },
-  titleEyebrow: {
-    color: themeTokens.colors.accentPrimary,
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  titleMain: {
+  titleHeadline: {
     color: themeTokens.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    textAlign: "center",
+  },
+  titleBadge: {
+    backgroundColor: themeTokens.colors.accentPrimary,
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    alignSelf: "center",
+  },
+  titleBadgeText: {
+    color: themeTokens.colors.backgroundDeep,
     fontSize: 14,
     fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   metricsSection: {
     backgroundColor: themeTokens.colors.surfaceLow,
