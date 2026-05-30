@@ -143,6 +143,13 @@ export function WorkoutSummaryScreen({ workoutId }: WorkoutSummaryScreenProps) {
       </View>
 
       <PrimaryButton
+        label="Share Result"
+        onPress={() => {
+          router.push(`/workout/share?workoutId=${summary.workoutId}` as never);
+        }}
+      />
+
+      <PrimaryButton
         label="Done"
         onPress={() => {
           router.replace("/(tabs)");
