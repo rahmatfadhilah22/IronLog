@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { NumericKeypad } from "../../src/components/numeric-keypad";
 import { PinDots } from "../../src/components/pin-dots";
@@ -10,9 +10,9 @@ import * as Haptics from "expo-haptics";
 type Phase = "verify" | "newQuestion" | "newAnswer";
 
 const QUESTIONS = [
-  "Nama hewan peliharaan pertama?",
-  "Nama jalan rumah masa kecil?",
-  "Hobi pertama yang kamu sukai?",
+  "What was your first pet's name?",
+  "What street did you grow up on?",
+  "What was your first favorite hobby?",
 ];
 
 export default function ChangeRecoveryScreen() {
@@ -42,18 +42,12 @@ export default function ChangeRecoveryScreen() {
           setCurrentPin("");
         }
       }
-    } else if (phase === "newAnswer" && answer.length < 6) {
-      setAnswer((a) => a + digit);
-      if ((answer + digit).length === 6) {
-        // auto-submit on 6 chars for answer
-      }
     }
   };
 
   const onBackspace = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (phase === "newAnswer") setAnswer((a) => a.slice(0, -1));
-    else if (phase === "verify") setCurrentPin((p) => p.slice(0, -1));
+    if (phase === "verify") setCurrentPin((p) => p.slice(0, -1));
   };
 
   const onSelectQuestion = (q: string) => {
@@ -64,7 +58,7 @@ export default function ChangeRecoveryScreen() {
 
   const onSubmitAnswer = async () => {
     if (answer.trim().length < 3) {
-      setError("Min 3 karakter");
+      setError("Answer must be at least 3 characters.");
       return;
     }
     setSaving(true);
@@ -73,7 +67,7 @@ export default function ChangeRecoveryScreen() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch {
-      setError("Gagal menyimpan");
+      setError("Failed to save recovery question.");
       setSaving(false);
     }
   };
@@ -87,16 +81,16 @@ export default function ChangeRecoveryScreen() {
 
         {phase === "verify" && (
           <>
-            <Text style={styles.eyebrow}>VERIFIKASI</Text>
-            <Text style={styles.title}>Masukkan PIN saat ini</Text>
+            <Text style={styles.eyebrow}>VERIFY PIN</Text>
+            <Text style={styles.title}>Enter current PIN</Text>
             <PinDots filled={currentPin.length} />
           </>
         )}
 
         {phase === "newQuestion" && (
           <>
-            <Text style={styles.eyebrow}>PERTANYAAN PEMULIHAN</Text>
-            <Text style={styles.title}>Pilih pertanyaan baru</Text>
+            <Text style={styles.eyebrow}>RECOVERY QUESTION</Text>
+            <Text style={styles.title}>Choose a new question</Text>
             <View style={styles.questionList}>
               {QUESTIONS.map((q) => (
                 <Pressable
@@ -115,48 +109,34 @@ export default function ChangeRecoveryScreen() {
 
         {phase === "newAnswer" && (
           <>
-            <Text style={styles.eyebrow}>JAWABAN BARU</Text>
+            <Text style={styles.eyebrow}>NEW ANSWER</Text>
             <Text style={styles.question}>{selectedQuestion}</Text>
-            <Text style={styles.answerDisplay}>{answer || "(ketik)"}</Text>
-            <PinDots filled={answer.length} />
+            <TextInput
+              style={styles.answerInput}
+              value={answer}
+              onChangeText={setAnswer}
+              placeholder="Type your answer"
+              placeholderTextColor={themeTokens.colors.textSecondary}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+            />
           </>
         )}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {saving ? <Text style={styles.info}>Menyimpan...</Text> : null}
+        {saving ? <Text style={styles.info}>Saving...</Text> : null}
       </View>
 
       <View style={styles.keypadArea}>
         {phase === "newAnswer" ? (
           <View style={{ alignItems: "center", gap: 12 }}>
-            <View style={styles.textKeypad}>
-              {["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM⌫"].map((row, ri) => (
-                <View key={ri} style={styles.textRow}>
-                  {row.split("").map((k) => {
-                    const isBack = k === "⌫";
-                    return (
-                      <Pressable
-                        key={k}
-                        style={[styles.textKey, isBack && styles.textKeyBack]}
-                        onPress={() => {
-                          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          if (isBack) setAnswer((a) => a.slice(0, -1));
-                          else setAnswer((a) => a + k.toLowerCase());
-                        }}
-                      >
-                        <Text style={[styles.textKeyLabel, isBack && styles.textKeyLabelBack]}>{k}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
             <Pressable
               style={[styles.saveBtn, answer.trim().length < 3 && styles.saveBtnDisabled]}
               onPress={onSubmitAnswer}
               disabled={answer.trim().length < 3}
             >
-              <Text style={styles.saveLabel}>SIMPAN</Text>
+              <Text style={styles.saveLabel}>SAVE</Text>
             </Pressable>
           </View>
         ) : (
@@ -180,16 +160,21 @@ const styles = StyleSheet.create({
   questionChipText: { color: themeTokens.colors.textSecondary, fontSize: 13, fontWeight: "700" },
   questionChipTextSelected: { color: themeTokens.colors.backgroundDeep },
   question: { color: themeTokens.colors.textPrimary, fontSize: 14, fontWeight: "600", textAlign: "center", paddingHorizontal: 8 },
-  answerDisplay: { color: themeTokens.colors.textPrimary, fontSize: 20, fontWeight: "600", letterSpacing: 1 },
+  answerInput: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontWeight: "600",
+    color: themeTokens.colors.textPrimary,
+    width: "100%",
+    maxWidth: 320,
+    textAlign: "center",
+  },
   error: { color: themeTokens.colors.danger, fontSize: 12, fontWeight: "700", textTransform: "uppercase" },
   info: { color: themeTokens.colors.textSecondary, fontSize: 12, fontWeight: "700", textTransform: "uppercase" },
   keypadArea: { flex: 1, justifyContent: "flex-end", alignItems: "center", paddingBottom: 48 },
-  textKeypad: { alignItems: "center", gap: 6 },
-  textRow: { flexDirection: "row", gap: 6 },
-  textKey: { width: 34, height: 46, backgroundColor: themeTokens.colors.surfaceLow, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  textKeyBack: { backgroundColor: themeTokens.colors.surfaceHigh },
-  textKeyLabel: { color: themeTokens.colors.textPrimary, fontSize: 14, fontWeight: "600" },
-  textKeyLabelBack: { fontSize: 18, color: themeTokens.colors.textSecondary },
   saveBtn: { backgroundColor: themeTokens.colors.accentPrimary, borderRadius: 8, paddingHorizontal: 32, paddingVertical: 14 },
   saveBtnDisabled: { opacity: 0.35 },
   saveLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },

@@ -6,55 +6,67 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { APP_NAME } from "../src/core/constants";
 import { themeTokens } from "../src/core/theme";
 import { useDatabaseBootstrap } from "../src/db/sqlite";
-import { initializeRestTimerNotifications } from "../src/services/notifications";
 import { pinAuthService } from "../src/services/auth";
+import { initializeRestTimerNotifications } from "../src/services/notifications";
 import { useAuthStore } from "../src/stores/auth-store";
 
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const [authChecked, setAuthChecked] = useState(false);
-  const [hasPin, setHasPin] = useState(false);
-  const isUnlocked = useAuthStore((s) => s.isUnlocked);
+type AuthBootstrapState = "loading" | "needsSetup" | "locked" | "ready" | "error";
 
-  useEffect(() => {
-    pinAuthService
-      .hasPin()
-      .then((v) => {
-        setHasPin(v);
-        setAuthChecked(true);
-      })
-      .catch(() => {
-        setAuthChecked(true);
-      });
-  }, []);
-
-  if (!authChecked) {
-    return (
-      <View style={styles.stateContainer}>
-        <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
-        <Text style={styles.stateLabel}>{APP_NAME.toUpperCase()}</Text>
-      </View>
-    );
-  }
-
-  if (!hasPin) {
-    // @ts-expect-error — no-screen-matching route
-    return <>{children}</>;
-  }
-
-  if (!isUnlocked) {
-    // @ts-expect-error — no-screen-matching route
-    return <>{children}</>;
-  }
-
-  return <>{children}</>;
-}
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 8000;
 
 export default function RootLayout() {
   const { isReady, error, retry } = useDatabaseBootstrap();
+  const [authState, setAuthState] = useState<AuthBootstrapState>("loading");
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const isUnlocked = useAuthStore((s) => s.isUnlocked);
 
   useEffect(() => {
     initializeRestTimerNotifications();
   }, []);
+
+  useEffect(() => {
+    if (!isReady) {
+      setAuthState("loading");
+      setAuthError(null);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const checkPinBootstrap = async () => {
+      try {
+        const hasPin = await withTimeout(
+          pinAuthService.hasPin(),
+          "PIN bootstrap timed out while reading SecureStore.",
+        );
+
+        if (isCancelled) {
+          return;
+        }
+
+        setAuthError(null);
+        setAuthState(hasPin ? (isUnlocked ? "ready" : "locked") : "needsSetup");
+      } catch (bootstrapError) {
+        if (isCancelled) {
+          return;
+        }
+
+        const normalizedError =
+          bootstrapError instanceof Error
+            ? bootstrapError
+            : new Error(String(bootstrapError));
+
+        setAuthError(normalizedError);
+        setAuthState("error");
+      }
+    };
+
+    void checkPinBootstrap();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isReady, isUnlocked]);
 
   if (error) {
     return (
@@ -69,12 +81,31 @@ export default function RootLayout() {
     );
   }
 
-  if (!isReady) {
+  if (!isReady || authState === "loading") {
     return (
       <View style={styles.stateContainer}>
         <ActivityIndicator size="large" color={themeTokens.colors.accentPrimary} />
         <Text style={styles.stateLabel}>{APP_NAME.toUpperCase()}</Text>
-        <Text style={styles.stateTitle}>Preparing local database</Text>
+        <Text style={styles.stateTitle}>{!isReady ? "Preparing local database" : "Checking app security"}</Text>
+      </View>
+    );
+  }
+
+  if (authState === "error") {
+    return (
+      <View style={styles.stateContainer}>
+        <Text style={styles.stateLabel}>SECURITY ERROR</Text>
+        <Text style={styles.stateTitle}>PIN initialization failed</Text>
+        <Text style={styles.stateDescription}>{authError?.message ?? "Unknown SecureStore error."}</Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => {
+            setAuthError(null);
+            setAuthState("loading");
+          }}
+        >
+          <Text style={styles.retryLabel}>Retry Security Check</Text>
+        </Pressable>
       </View>
     );
   }
@@ -82,15 +113,19 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <AuthGate>
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: themeTokens.colors.backgroundDeep },
-            headerTintColor: themeTokens.colors.textPrimary,
-            contentStyle: { backgroundColor: themeTokens.colors.background },
-            headerTitleStyle: { fontWeight: "700" },
-          }}
-        >
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: themeTokens.colors.backgroundDeep },
+          headerTintColor: themeTokens.colors.textPrimary,
+          contentStyle: { backgroundColor: themeTokens.colors.background },
+          headerTitleStyle: { fontWeight: "700" },
+        }}
+      >
+        <Stack.Protected guard={authState !== "ready"}>
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+        </Stack.Protected>
+
+        <Stack.Protected guard={authState === "ready"}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="routines/create" options={{ title: "Create Routine" }} />
           <Stack.Screen name="routines/[routineId]" options={{ title: "Routine Detail" }} />
@@ -115,15 +150,28 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: "transparent" },
             }}
           />
-          <Stack.Screen name="auth/setup" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/recovery" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/change-pin" options={{ title: "Ganti PIN", headerShown: false }} />
-          <Stack.Screen name="auth/change-recovery" options={{ title: "Ganti Pertanyaan", headerShown: false }} />
-        </Stack>
-      </AuthGate>
+        </Stack.Protected>
+      </Stack>
     </>
   );
+}
+
+function withTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error(message));
+    }, AUTH_BOOTSTRAP_TIMEOUT_MS);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((timeoutError: unknown) => {
+        clearTimeout(timeoutId);
+        reject(timeoutError);
+      });
+  });
 }
 
 const styles = StyleSheet.create({
@@ -146,6 +194,7 @@ const styles = StyleSheet.create({
     fontSize: themeTokens.typography.title.fontSize,
     lineHeight: themeTokens.typography.title.lineHeight,
     fontWeight: "700",
+    textAlign: "center",
   },
   stateDescription: {
     color: themeTokens.colors.textSecondary,

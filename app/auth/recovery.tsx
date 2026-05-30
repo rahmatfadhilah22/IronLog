@@ -149,7 +149,7 @@ export default function PinRecoveryScreen() {
           {(phase === "newPin" || phase === "confirmNew") && (
             <>
               <Text style={styles.eyebrow}>RESET PIN</Text>
-              <Text style={styles.title}>
+              <Text style={styles.titlePin}>
                 {phase === "confirmNew" ? "Confirm PIN" : "New PIN"}
               </Text>
               <Text style={styles.eyebrow2}>
@@ -180,10 +180,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   contentWrapPin: {
-    flex: 1,
+    flex: 3,
     justifyContent: "flex-end",
     alignItems: "center",
-    paddingBottom: 32,
+    paddingBottom: 12,
   },
   topArea: { alignItems: "center", gap: 12, paddingHorizontal: 24 },
   backBtn: {
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   title: { color: themeTokens.colors.textPrimary, fontSize: 26, fontWeight: "800", textTransform: "uppercase", marginTop: 24 },
+  titlePin: { color: themeTokens.colors.accentPrimary, fontSize: 32, fontWeight: "800", letterSpacing: 2, textTransform: "uppercase" },
   eyebrow: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
   eyebrow2: { color: themeTokens.colors.textSecondary, fontSize: 11, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
   question: { color: themeTokens.colors.textPrimary, fontSize: 15, fontWeight: "600", textAlign: "center", paddingHorizontal: 8 },
@@ -222,5 +223,5 @@ const styles = StyleSheet.create({
   verifyBtnDisabled: { opacity: 0.35 },
   verifyLabel: { color: themeTokens.colors.backgroundDeep, fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textTransform: "uppercase" },
   btnRow: { flexDirection: "row", gap: 10, marginTop: 4, alignItems: "center" },
-  keypadArea: { justifyContent: "center", alignItems: "center", paddingBottom: 48 },
+  keypadArea: { flex: 2, justifyContent: "flex-start", alignItems: "center", paddingTop: 40, paddingBottom: 48 },
 });

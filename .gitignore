@@ -10,6 +10,10 @@ dist/
 web-build/
 coverage/
 
+/docs
+
+/design-reference
+
 # Native / bundler artifacts
 *.apk
 *.aab

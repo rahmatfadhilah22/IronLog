@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { BackHandler, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { NumericKeypad } from "../../src/components/numeric-keypad";
 import { PinDots } from "../../src/components/pin-dots";
@@ -9,9 +9,9 @@ import { themeTokens } from "../../src/core/theme";
 import * as Haptics from "expo-haptics";
 
 const RECOVERY_QUESTIONS = [
-  "Nama hewan peliharaan pertama?",
-  "Nama jalan rumah masa kecil?",
-  "Hobi pertama yang kamu sukai?",
+  "What was your first pet's name?",
+  "What street did you grow up on?",
+  "What was your first favorite hobby?",
 ];
 
 type Step = "enter" | "confirm" | "recovery";
@@ -28,11 +28,11 @@ export default function PinSetupScreen() {
   const [recoveryAnswer, setRecoveryAnswer] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Intercept back button during setup
-  useState(() => {
+  // Intercept back button during setup — can't back out of PIN setup
+  useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => true);
     return () => sub.remove();
-  });
+  }, []);
 
   const appendDigit = (digit: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -66,18 +66,9 @@ export default function PinSetupScreen() {
     if (step === "confirm" && confirmPin.length > 0) setConfirmPin((p) => p.slice(0, -1));
   };
 
-  const onAnswerKey = (key: string) => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (key === "⌫") {
-      setRecoveryAnswer((a) => a.slice(0, -1));
-    } else {
-      setRecoveryAnswer((a) => a + key);
-    }
-  };
-
   const onFinish = async () => {
     if (recoveryAnswer.trim().length < 3) {
-      setError("Jawaban minimal 3 karakter.");
+      setError("Answer must be at least 3 characters.");
       return;
     }
     setSaving(true);
@@ -86,33 +77,34 @@ export default function PinSetupScreen() {
       unlock();
       router.replace("/");
     } catch {
-      setError("Gagal menyimpan PIN. Coba lagi.");
+      setError("Failed to save PIN. Please try again.");
       setSaving(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.topArea}>
+      <View style={styles.authContent}>
+        <View style={styles.topArea}>
         {step === "enter" && (
           <>
             <Text style={styles.stepLabel}>STEP 1 / 3</Text>
-            <Text style={styles.title}>Buat PIN</Text>
-            <Text style={styles.subtitle}>Masukkan 6 digit PIN</Text>
+            <Text style={styles.title}>Create PIN</Text>
+            <Text style={styles.subtitle}>Enter your 6-digit PIN</Text>
           </>
         )}
         {step === "confirm" && (
           <>
             <Text style={styles.stepLabel}>STEP 2 / 3</Text>
-            <Text style={styles.title}>Konfirmasi PIN</Text>
-            <Text style={styles.subtitle}>Ketik ulang PIN</Text>
+            <Text style={styles.title}>Confirm PIN</Text>
+            <Text style={styles.subtitle}>Re-enter your PIN</Text>
           </>
         )}
         {step === "recovery" && (
           <>
             <Text style={styles.stepLabel}>STEP 3 / 3</Text>
-            <Text style={styles.title}>Pertanyaan Pemulihan</Text>
-            <Text style={styles.subtitle}>Pilih satu dan jawab untuk reset PIN nanti</Text>
+            <Text style={styles.title}>Recovery Question</Text>
+            <Text style={styles.subtitle}>Choose one question and save your answer</Text>
           </>
         )}
 
@@ -120,7 +112,8 @@ export default function PinSetupScreen() {
           <PinDots filled={step === "enter" ? pin.length : step === "confirm" ? confirmPin.length : 0} />
         </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+        </View>
       </View>
 
       <View style={styles.keypadArea}>
@@ -128,7 +121,7 @@ export default function PinSetupScreen() {
           <NumericKeypad onDigit={appendDigit} onBackspace={onBackspace} />
         ) : (
           <View style={styles.recoveryForm}>
-            <Text style={styles.chipGroupLabel}>Pilih pertanyaan:</Text>
+            <Text style={styles.chipGroupLabel}>Choose a question</Text>
             <View style={styles.chipGroup}>
               {RECOVERY_QUESTIONS.map((q) => (
                 <Pressable
@@ -143,36 +136,20 @@ export default function PinSetupScreen() {
               ))}
             </View>
 
-            <Text style={styles.chipGroupLabel}>Jawaban:</Text>
-            <Text style={styles.answerDisplay}>{recoveryAnswer || "(ketik di bawah)"}</Text>
-
-            <View style={styles.miniKeypadRow}>
-              {[
-                ["Q","W","E","R","T","Y","U","I","O","P"],
-                ["A","S","D","F","G","H","J","K","L"],
-                ["Z","X","C","V","B","N","M","⌫"],
-              ].map((row, ri) => (
-                <View key={ri} style={styles.miniKeyRow}>
-                  {row.map((key) => {
-                    const isBackspace = key === "⌫";
-                    return (
-                      <Pressable
-                        key={key}
-                        style={[styles.miniKey, isBackspace ? styles.miniKeyBack : null]}
-                        onPress={() => onAnswerKey(key)}
-                      >
-                        <Text style={[styles.miniKeyText, isBackspace ? styles.miniKeyTextBack : null]}>
-                          {key}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
+            <Text style={styles.chipGroupLabel}>Answer</Text>
+            <TextInput
+              style={styles.answerInput}
+              value={recoveryAnswer}
+              onChangeText={setRecoveryAnswer}
+              placeholder="Type your answer"
+              placeholderTextColor={themeTokens.colors.textSecondary}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+            />
 
             <Text style={styles.charCount}>
-              {recoveryAnswer.length} karakter {recoveryAnswer.trim().length >= 3 ? "✓" : "— min 3"}
+              {recoveryAnswer.length} characters {recoveryAnswer.trim().length >= 3 ? "✓" : "- min 3"}
             </Text>
 
             <Pressable
@@ -182,7 +159,7 @@ export default function PinSetupScreen() {
               ]}
               onPress={onFinish}
             >
-              <Text style={styles.finishLabel}>{saving ? "MENYIMPAN..." : "SELESAI"}</Text>
+              <Text style={styles.finishLabel}>{saving ? "SAVING..." : "FINISH"}</Text>
             </Pressable>
           </View>
         )}
@@ -192,8 +169,20 @@ export default function PinSetupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeTokens.colors.background, paddingTop: 60 },
-  topArea: { alignItems: "center", gap: themeTokens.spacing.md, paddingHorizontal: 24 },
+  container: { flex: 1, backgroundColor: themeTokens.colors.background },
+  authContent: {
+    flex: 1,
+    justifyContent: "center",
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+  topArea: {
+    alignItems: "center",
+    gap: themeTokens.spacing.sm,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    marginTop: 48
+  },
   stepLabel: {
     color: themeTokens.colors.accentPrimary,
     fontSize: 11,
@@ -213,7 +202,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
-  dotsRow: { marginTop: themeTokens.spacing.sm },
+  dotsRow: { marginTop: themeTokens.spacing.xs },
   error: {
     color: themeTokens.colors.danger,
     fontSize: 12,
@@ -222,8 +211,9 @@ const styles = StyleSheet.create({
   },
   keypadArea: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
     alignItems: "center",
+    paddingTop: 0,
     paddingBottom: 48,
   },
   recoveryForm: { alignItems: "center", gap: 12, paddingHorizontal: 24, width: "100%" },
@@ -252,26 +242,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   chipTextSelected: { color: themeTokens.colors.backgroundDeep },
-  answerDisplay: {
-    color: themeTokens.colors.textPrimary,
-    fontSize: 18,
-    fontWeight: "600",
-    letterSpacing: 1,
-    minHeight: 24,
-  },
-  miniKeypadRow: { gap: 4 },
-  miniKeyRow: { flexDirection: "row", gap: 4 },
-  miniKey: {
-    width: 34,
-    height: 44,
+  answerInput: {
+    width: "100%",
     backgroundColor: themeTokens.colors.surfaceLow,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: themeTokens.radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: themeTokens.colors.textPrimary,
+    fontSize: 16,
+    fontWeight: "600",
   },
-  miniKeyBack: { backgroundColor: themeTokens.colors.surfaceHigh },
-  miniKeyText: { color: themeTokens.colors.textPrimary, fontSize: 15, fontWeight: "600" },
-  miniKeyTextBack: { color: themeTokens.colors.textSecondary, fontSize: 18 },
   charCount: {
     color: themeTokens.colors.textSecondary,
     fontSize: 12,

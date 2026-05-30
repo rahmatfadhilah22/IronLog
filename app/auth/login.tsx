@@ -54,14 +54,16 @@ export default function PinLoginScreen() {
 
   return (
     <Animated.View style={[styles.container, { transform: [{ translateX: shakeAnim }] }]}>
-      <View style={styles.topArea}>
-        <Text style={styles.title}>IronLog</Text>
-        <Text style={styles.subtitle}>Masukkan PIN</Text>
-        <PinDots filled={pin.length} />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable onPress={() => router.push("/auth/recovery")} style={styles.forgotButton}>
-          <Text style={styles.forgotLabel}>Lupa PIN?</Text>
-        </Pressable>
+      <View style={styles.authContent}>
+        <View style={styles.topArea}>
+          <Text style={styles.title}>IronLog</Text>
+          <Text style={styles.subtitle}>Enter your PIN</Text>
+          <PinDots filled={pin.length} />
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <Pressable onPress={() => router.push("/auth/recovery")} style={styles.forgotButton}>
+            <Text style={styles.forgotLabel}>Forgot PIN?</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.keypadArea}>
@@ -75,12 +77,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: themeTokens.colors.background,
-    paddingTop: 80,
+  },
+  authContent: {
+    flex: 1,
+    justifyContent: "center",
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   topArea: {
     alignItems: "center",
-    gap: themeTokens.spacing.md,
+    gap: themeTokens.spacing.sm,
     paddingHorizontal: 24,
+    paddingTop: 48,
+    marginTop: 48
   },
   title: {
     color: themeTokens.colors.accentPrimary,
@@ -112,8 +121,9 @@ const styles = StyleSheet.create({
   },
   keypadArea: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
     alignItems: "center",
+    marginTop: -48,
     paddingBottom: 48,
   },
 });
