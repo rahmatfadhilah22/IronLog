@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   titleHeadline: {
     color: themeTokens.colors.textPrimary,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "900",
     textTransform: "uppercase",
     letterSpacing: 1,
