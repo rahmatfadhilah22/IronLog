@@ -136,6 +136,7 @@ export default function ProgressScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [overview, setOverview] = useState<ProgressOverview | null>(null);
   const [metrics, setMetrics] = useState<BodyMetricEntry[]>([]);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   const loadOverview = useCallback(() => {
     let isActive = true;
@@ -287,7 +288,7 @@ export default function ProgressScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Exercise History</Text>
             <View style={styles.exerciseList}>
-              {overview.exercises.map((exercise, index) => (
+              {overview.exercises.slice(0, visibleCount).map((exercise, index) => (
                 <Pressable
                   key={exercise.exerciseId}
                   style={({ pressed }) => [
@@ -318,6 +319,17 @@ export default function ProgressScreen() {
                 </Pressable>
               ))}
             </View>
+            {overview.exercises.length > visibleCount ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.showMoreBtn,
+                  pressed ? styles.showMoreBtnPressed : null,
+                ]}
+                onPress={() => setVisibleCount((c) => c + 5)}
+              >
+                <Text style={styles.showMoreLabel}>Show More</Text>
+              </Pressable>
+            ) : null}
           </View>
 
           <Pressable
@@ -582,6 +594,24 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 0.7,
+  },
+  showMoreBtn: {
+    minHeight: 44,
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: themeTokens.spacing.xs,
+  },
+  showMoreBtnPressed: {
+    opacity: 0.8,
+  },
+  showMoreLabel: {
+    color: themeTokens.colors.accentPrimary,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    fontSize: 12,
+    letterSpacing: 0.8,
   },
   bodyMetricsButton: {
     minHeight: 52,
