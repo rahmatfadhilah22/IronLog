@@ -2,6 +2,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -39,6 +41,7 @@ export default function SettingsScreen() {
     payload: Parameters<typeof backupService.restoreFromBackup>[0];
     sourceName: string;
   } | null>(null);
+  const [showDonate, setShowDonate] = useState(false);
 
   const loadSettings = useCallback(() => {
     let isActive = true;
@@ -318,6 +321,15 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Support</Text>
+        <ActionButton
+          label="Donate"
+          description="Support the developer via QRIS"
+          onPress={() => setShowDonate(true)}
+        />
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.aboutText}>{APP_NAME} mobile strength log</Text>
         <Text style={styles.versionText}>v{APP_VERSION}{NATIVE_BUILD ? ` (${NATIVE_BUILD})` : ""}</Text>
       </View>
@@ -344,6 +356,42 @@ export default function SettingsScreen() {
           setPendingRestore(null);
         }}
       />
+
+      <Modal
+        visible={showDonate}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDonate(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Support IronLog</Text>
+            <Text style={styles.modalSubtitle}>
+              Scan QRIS dengan aplikasi banking atau e-wallet kamu
+            </Text>
+            <View style={styles.qrWrap}>
+              <Image
+                source={require("../../assets/qris-donate.jpeg")}
+                style={styles.qrImage}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.modalHint}>
+              Buka GoPay / OVO / Dana / BCA Mobile / Livin / BSI Mobile{'\n'}
+              lalu pindai kode QR di atas
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.modalCloseBtn,
+                pressed ? styles.modalCloseBtnPressed : null,
+              ]}
+              onPress={() => setShowDonate(false)}
+            >
+              <Text style={styles.modalCloseLabel}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -591,5 +639,68 @@ const styles = StyleSheet.create({
     color: themeTokens.colors.danger,
     fontSize: 12,
     fontWeight: "700",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: themeTokens.spacing.xl,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: 16,
+    padding: themeTokens.spacing.xl,
+    alignItems: "center",
+    gap: themeTokens.spacing.md,
+  },
+  modalTitle: {
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 20,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  modalSubtitle: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  qrWrap: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: themeTokens.spacing.sm,
+  },
+  qrImage: {
+    width: 220,
+    height: 220,
+  },
+  modalHint: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 10,
+    lineHeight: 15,
+    textAlign: "center",
+    letterSpacing: 0.3,
+  },
+  modalCloseBtn: {
+    minHeight: 46,
+    width: "100%",
+    backgroundColor: themeTokens.colors.accentPrimary,
+    borderRadius: themeTokens.radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCloseBtnPressed: {
+    opacity: 0.8,
+  },
+  modalCloseLabel: {
+    color: themeTokens.colors.backgroundDeep,
+    fontWeight: "800",
+    fontSize: 14,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
 });
