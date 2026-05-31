@@ -13,6 +13,7 @@
     "@expo/vector-icons": "^15.1.1",
     "expo": "55.0.9",
     "expo-application": "~55.0.15",
+    "expo-asset": "~55.0.17",
     "expo-constants": "~55.0.9",
     "expo-crypto": "~55.0.15",
     "expo-document-picker": "55.0.9",

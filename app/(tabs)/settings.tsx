@@ -13,7 +13,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Application from "expo-application";
+import { Asset } from "expo-asset";
 import Constants from "expo-constants";
+import * as MediaLibrary from "expo-media-library";
 import { router } from "expo-router";
 
 import { APP_NAME } from "../../src/core/constants";
@@ -42,6 +44,22 @@ export default function SettingsScreen() {
     sourceName: string;
   } | null>(null);
   const [showDonate, setShowDonate] = useState(false);
+  const [savingQris, setSavingQris] = useState(false);
+
+  const handleSaveQris = async () => {
+    setSavingQris(true);
+    try {
+      const asset = Asset.fromModule(require("../../assets/qris-donate.jpeg"));
+      await asset.downloadAsync();
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        return;
+      }
+      await MediaLibrary.saveToLibraryAsync(asset.localUri!);
+    } finally {
+      setSavingQris(false);
+    }
+  };
 
   const loadSettings = useCallback(() => {
     let isActive = true;
@@ -367,7 +385,7 @@ export default function SettingsScreen() {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Support IronLog</Text>
             <Text style={styles.modalSubtitle}>
-              Scan QRIS dengan aplikasi banking atau e-wallet kamu
+              Scan this QRIS with your banking or e-wallet app
             </Text>
             <View style={styles.qrWrap}>
               <Image
@@ -376,9 +394,21 @@ export default function SettingsScreen() {
                 resizeMode="contain"
               />
             </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.downloadBtn,
+                (pressed || savingQris) ? styles.downloadBtnPressed : null,
+              ]}
+              onPress={() => { void handleSaveQris(); }}
+              disabled={savingQris}
+            >
+              <Text style={styles.downloadBtnLabel}>
+                {savingQris ? "Saving..." : "Save QRIS"}
+              </Text>
+            </Pressable>
             <Text style={styles.modalHint}>
-              Buka GoPay / OVO / Dana / BCA Mobile / Livin / BSI Mobile{'\n'}
-              lalu pindai kode QR di atas
+              Open GoPay / OVO / Dana / BCA / Livin / BSI{'\n'}
+              and scan the QR code above
             </Text>
             <Pressable
               style={({ pressed }) => [
@@ -677,6 +707,24 @@ const styles = StyleSheet.create({
   qrImage: {
     width: 220,
     height: 220,
+  },
+  downloadBtn: {
+    minHeight: 40,
+    paddingHorizontal: 20,
+    backgroundColor: themeTokens.colors.surfaceHigh,
+    borderRadius: themeTokens.radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  downloadBtnPressed: {
+    opacity: 0.7,
+  },
+  downloadBtnLabel: {
+    color: themeTokens.colors.textPrimary,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
   },
   modalHint: {
     color: themeTokens.colors.textSecondary,
