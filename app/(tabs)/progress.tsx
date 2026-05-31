@@ -2,7 +2,6 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +9,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { LineChart } from "react-native-chart-kit";
 
 import { CalendarHeatmap, EmptyState } from "../../src/components";
 import { themeTokens } from "../../src/core/theme";
@@ -24,6 +22,50 @@ function StatCard({ label, value }: { label: string; value: string }) {
     <View style={styles.statCard}>
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue}>{value}</Text>
+    </View>
+  );
+}
+
+function WeightBars({
+  data,
+  labels,
+  unit,
+}: {
+  data: number[];
+  labels: string[];
+  unit: string;
+}) {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+
+  return (
+    <View style={styles.chartWrap}>
+      <View style={styles.barsContainer}>
+        {data.map((value, i) => {
+          const height = ((value - min) / range) * 80 + 16;
+          return (
+            <View key={i} style={styles.barColumn}>
+              <Text style={styles.barValue}>
+                {value.toFixed(1)}
+              </Text>
+              <View
+                style={[
+                  styles.bar,
+                  {
+                    height,
+                    backgroundColor:
+                      i === data.length - 1
+                        ? themeTokens.colors.accentPrimary
+                        : themeTokens.colors.surfaceHigh,
+                  },
+                ]}
+              />
+              <Text style={styles.barLabel}>{labels[i]}</Text>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -153,35 +195,11 @@ export default function ProgressScreen() {
                   )}
                 </View>
               )}
-              <View style={styles.chartWrap}>
-                <LineChart
-                  data={{
-                    labels: chartData.labels,
-                    datasets: chartData.datasets,
-                  }}
-                  width={Dimensions.get("window").width - 64}
-                  height={180}
-                  yAxisSuffix={overview?.preferredUnit.toUpperCase() ?? "kg"}
-                  withDots={true}
-                  withShadow={false}
-                  withInnerLines={false}
-                  withOuterLines={false}
-                  chartConfig={{
-                    backgroundGradientFrom: themeTokens.colors.surfaceLow,
-                    backgroundGradientTo: themeTokens.colors.surfaceLow,
-                    decimalPlaces: 1,
-                    color: (opacity = 1) => `rgba(204, 255, 0, ${opacity})`,
-                    labelColor: () => themeTokens.colors.textSecondary,
-                    propsForDots: {
-                      r: "3",
-                      strokeWidth: "1",
-                      stroke: themeTokens.colors.accentPrimary,
-                    },
-                  }}
-                  bezier
-                  style={styles.chart}
-                />
-              </View>
+              <WeightBars
+                data={chartData.datasets[0].data}
+                labels={chartData.labels}
+                unit={overview?.preferredUnit.toUpperCase() ?? "kg"}
+              />
             </View>
           ) : null}
 
@@ -546,9 +564,35 @@ const styles = StyleSheet.create({
   chartWrap: {
     backgroundColor: themeTokens.colors.surfaceLow,
     borderRadius: themeTokens.radius.sm,
-    overflow: "hidden",
+    padding: themeTokens.spacing.md,
+    paddingTop: themeTokens.spacing.lg,
   },
-  chart: {
-    borderRadius: themeTokens.radius.sm,
+  barsContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    height: 120,
+  },
+  barColumn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  bar: {
+    width: 12,
+    borderRadius: 4,
+    minHeight: 4,
+  },
+  barValue: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 9,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  barLabel: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 8,
+    fontWeight: "600",
+    marginTop: 4,
   },
 });
