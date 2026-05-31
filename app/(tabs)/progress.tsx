@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Svg, { Circle, Line, Polyline, Text as SvgText } from "react-native-svg";
 
 import { CalendarHeatmap, EmptyState } from "../../src/components";
 import { themeTokens } from "../../src/core/theme";
@@ -26,7 +28,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-function WeightBars({
+function LineWeightChart({
   data,
   labels,
   unit,
@@ -35,37 +37,89 @@ function WeightBars({
   labels: string[];
   unit: string;
 }) {
+  const w = Dimensions.get("window").width - 88;
+  const h = 160;
+  const padLeft = 44;
+  const padRight = 16;
+  const padTop = 20;
+  const padBottom = 24;
+  const plotW = w - padLeft - padRight;
+  const plotH = h - padTop - padBottom;
+  const min = Math.min(...data);
   const max = Math.max(...data);
-  const CHART_H = 100;
-  const MIN_H = 8;
+  const range = max - min || 1;
+  const points = data
+    .map((v, i) => {
+      const x = padLeft + (i / Math.max(data.length - 1, 1)) * plotW;
+      const y = padTop + ((max - v) / range) * plotH;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const gridLines = 3;
+  const gridY = Array.from({ length: gridLines + 1 }, (_, i) => {
+    const val = max - (range / gridLines) * i;
+    return { label: val.toFixed(1), y: padTop + (i / gridLines) * plotH };
+  });
 
   return (
     <View style={styles.chartWrap}>
-      <View style={styles.barsContainer}>
-        {data.map((value, i) => {
-          const height = Math.max((value / max) * CHART_H, MIN_H);
+      <Svg width={w} height={h}>
+        {gridY.map((g, i) => (
+          <View key={i}>
+            <Line
+              x1={padLeft}
+              y1={g.y}
+              x2={w - padRight}
+              y2={g.y}
+              stroke={themeTokens.colors.surfaceHigh}
+              strokeWidth={1}
+            />
+            <SvgText
+              x={padLeft - 6}
+              y={g.y + 4}
+              fill={themeTokens.colors.textSecondary}
+              fontSize={10}
+              textAnchor="end"
+            >
+              {g.label}
+            </SvgText>
+          </View>
+        ))}
+        <Polyline
+          points={points}
+          fill="none"
+          stroke={themeTokens.colors.accentPrimary}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        {data.map((v, i) => {
+          const x = padLeft + (i / Math.max(data.length - 1, 1)) * plotW;
+          const y = padTop + ((max - v) / range) * plotH;
+          const isLast = i === data.length - 1;
           return (
-            <View key={i} style={styles.barColumn}>
-              <Text style={styles.barValue}>
-                {value.toFixed(1)}
-              </Text>
-              <View
-                style={[
-                  styles.bar,
-                  {
-                    height,
-                    backgroundColor:
-                      i === data.length - 1
-                        ? themeTokens.colors.accentPrimary
-                        : themeTokens.colors.textPrimary,
-                  },
-                ]}
+            <View key={i}>
+              <Circle
+                cx={x}
+                cy={y}
+                r={isLast ? 4 : 3}
+                fill={isLast ? themeTokens.colors.accentPrimary : themeTokens.colors.textPrimary}
+                stroke={themeTokens.colors.background}
+                strokeWidth={1.5}
               />
-              <Text style={styles.barLabel}>{labels[i]}</Text>
+              <SvgText
+                x={x}
+                y={h - 4}
+                fill={themeTokens.colors.textSecondary}
+                fontSize={9}
+                textAnchor="middle"
+              >
+                {labels[i]}
+              </SvgText>
             </View>
           );
         })}
-      </View>
+      </Svg>
     </View>
   );
 }
@@ -195,7 +249,7 @@ export default function ProgressScreen() {
                   )}
                 </View>
               )}
-              <WeightBars
+              <LineWeightChart
                 data={chartData.datasets[0].data}
                 labels={chartData.labels}
                 unit={overview?.preferredUnit.toUpperCase() ?? "kg"}
@@ -564,35 +618,7 @@ const styles = StyleSheet.create({
   chartWrap: {
     backgroundColor: themeTokens.colors.surfaceLow,
     borderRadius: themeTokens.radius.sm,
-    padding: themeTokens.spacing.md,
-    paddingTop: themeTokens.spacing.lg,
-  },
-  barsContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "center",
-    gap: 4,
-    height: 120,
-  },
-  barColumn: {
+    padding: themeTokens.spacing.sm,
     alignItems: "center",
-    justifyContent: "flex-end",
-  },
-  bar: {
-    width: 12,
-    borderRadius: 4,
-    minHeight: 4,
-  },
-  barValue: {
-    color: themeTokens.colors.textSecondary,
-    fontSize: 9,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  barLabel: {
-    color: themeTokens.colors.textSecondary,
-    fontSize: 8,
-    fontWeight: "600",
-    marginTop: 4,
   },
 });
