@@ -57,7 +57,7 @@ function WeightBars({
                     backgroundColor:
                       i === data.length - 1
                         ? themeTokens.colors.accentPrimary
-                        : themeTokens.colors.surfaceHigh,
+                        : themeTokens.colors.textPrimary,
                   },
                 ]}
               />
