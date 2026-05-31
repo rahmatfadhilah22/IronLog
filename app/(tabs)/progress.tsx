@@ -570,11 +570,11 @@ const styles = StyleSheet.create({
   barsContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 4,
     height: 120,
   },
   barColumn: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "flex-end",
   },
