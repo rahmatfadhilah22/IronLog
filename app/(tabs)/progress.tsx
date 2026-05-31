@@ -1,7 +1,8 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,10 +10,13 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { LineChart } from "react-native-chart-kit";
 
 import { CalendarHeatmap, EmptyState } from "../../src/components";
 import { themeTokens } from "../../src/core/theme";
 import { analyticsService } from "../../src/services/analytics";
+import { bodyMetricsService } from "../../src/services/body-metrics";
+import type { BodyMetricEntry } from "../../src/types/body-metrics";
 import type { ProgressOverview } from "../../src/types/progress";
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -35,11 +39,16 @@ export default function ProgressScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [overview, setOverview] = useState<ProgressOverview | null>(null);
+  const [metrics, setMetrics] = useState<BodyMetricEntry[]>([]);
 
   const loadOverview = useCallback(() => {
     let isActive = true;
     setIsLoading(true);
     setErrorMessage(null);
+
+    void bodyMetricsService.listMetrics(30).then((m) => {
+      if (isActive) setMetrics(m);
+    });
 
     analyticsService
       .getProgressOverview(search.trim() || undefined)
@@ -62,6 +71,25 @@ export default function ProgressScreen() {
   }, [search]);
 
   useFocusEffect(useCallback(() => { loadOverview(); }, [loadOverview]));
+
+  const chartData = useMemo(() => {
+    if (metrics.length < 2) return null;
+    const recent = [...metrics].reverse().slice(0, 10);
+    return {
+      labels: recent.map((m) => {
+        const d = new Date(m.recordedAt);
+        return `${d.getDate()}/${d.getMonth() + 1}`;
+      }),
+      datasets: [
+        {
+          data: recent.map((m) => m.weight),
+          strokeWidth: 2,
+        },
+      ],
+    };
+  }, [metrics]);
+
+  const latestMetric = metrics.length > 0 ? metrics[0] : null;
 
   return (
     <View style={styles.container}>
@@ -109,6 +137,53 @@ export default function ProgressScreen() {
             <Text style={styles.sectionTitle}>Calendar</Text>
             <CalendarHeatmap />
           </View>
+
+          {chartData ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Body Weight Trend</Text>
+              {latestMetric && (
+                <View style={styles.weightHeader}>
+                  <Text style={styles.weightValue}>
+                    {latestMetric.weight} {overview?.preferredUnit.toUpperCase() ?? "KG"}
+                  </Text>
+                  {latestMetric.bodyFatPercentage != null && (
+                    <Text style={styles.weightSub}>
+                      BF {latestMetric.bodyFatPercentage}%
+                    </Text>
+                  )}
+                </View>
+              )}
+              <View style={styles.chartWrap}>
+                <LineChart
+                  data={{
+                    labels: chartData.labels,
+                    datasets: chartData.datasets,
+                  }}
+                  width={Dimensions.get("window").width - 64}
+                  height={180}
+                  yAxisSuffix={overview?.preferredUnit.toUpperCase() ?? "kg"}
+                  withDots={true}
+                  withShadow={false}
+                  withInnerLines={false}
+                  withOuterLines={false}
+                  chartConfig={{
+                    backgroundGradientFrom: themeTokens.colors.surfaceLow,
+                    backgroundGradientTo: themeTokens.colors.surfaceLow,
+                    decimalPlaces: 1,
+                    color: (opacity = 1) => `rgba(204, 255, 0, ${opacity})`,
+                    labelColor: () => themeTokens.colors.textSecondary,
+                    propsForDots: {
+                      r: "3",
+                      strokeWidth: "1",
+                      stroke: themeTokens.colors.accentPrimary,
+                    },
+                  }}
+                  bezier
+                  style={styles.chart}
+                />
+              </View>
+            </View>
+          ) : null}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Best Lifts</Text>
@@ -180,7 +255,9 @@ export default function ProgressScreen() {
             ]}
             onPress={() => { router.push("/body-metrics"); }}
           >
-            <Text style={styles.bodyMetricsLabel}>Open Body Metrics</Text>
+            <Text style={styles.bodyMetricsLabel}>
+              {metrics.length > 0 ? "Log Weight" : "Start Tracking Weight"}
+            </Text>
           </Pressable>
         </ScrollView>
       )}
@@ -450,5 +527,28 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     fontSize: 12,
     letterSpacing: 0.8,
+  },
+  weightHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: themeTokens.spacing.sm,
+  },
+  weightValue: {
+    color: themeTokens.colors.accentPrimary,
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  weightSub: {
+    color: themeTokens.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  chartWrap: {
+    backgroundColor: themeTokens.colors.surfaceLow,
+    borderRadius: themeTokens.radius.sm,
+    overflow: "hidden",
+  },
+  chart: {
+    borderRadius: themeTokens.radius.sm,
   },
 });
