@@ -45,17 +45,23 @@ export default function SettingsScreen() {
   } | null>(null);
   const [showDonate, setShowDonate] = useState(false);
   const [savingQris, setSavingQris] = useState(false);
+  const [qrisMessage, setQrisMessage] = useState<string | null>(null);
 
   const handleSaveQris = async () => {
     setSavingQris(true);
+    setQrisMessage(null);
     try {
       const asset = Asset.fromModule(require("../../assets/qris-donate.jpeg"));
       await asset.downloadAsync();
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
+        setQrisMessage("Permission denied.");
         return;
       }
       await MediaLibrary.saveToLibraryAsync(asset.localUri!);
+      setQrisMessage("Saved to gallery.");
+    } catch {
+      setQrisMessage("Save failed.");
     } finally {
       setSavingQris(false);
     }
@@ -406,6 +412,18 @@ export default function SettingsScreen() {
                 {savingQris ? "Saving..." : "Save QRIS"}
               </Text>
             </Pressable>
+            {qrisMessage ? (
+              <Text
+                style={[
+                  styles.qrisMsg,
+                  qrisMessage === "Saved to gallery."
+                    ? styles.qrisMsgSuccess
+                    : styles.qrisMsgError,
+                ]}
+              >
+                {qrisMessage}
+              </Text>
+            ) : null}
             <Text style={styles.modalHint}>
               Open GoPay / OVO / Dana / BCA / Livin / BSI{'\n'}
               and scan the QR code above
@@ -725,6 +743,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.6,
     textTransform: "uppercase",
+  },
+  qrisMsg: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  qrisMsgSuccess: {
+    color: themeTokens.colors.accentPrimary,
+  },
+  qrisMsgError: {
+    color: themeTokens.colors.danger,
   },
   modalHint: {
     color: themeTokens.colors.textSecondary,
