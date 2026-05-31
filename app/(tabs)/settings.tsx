@@ -711,16 +711,16 @@ const styles = StyleSheet.create({
   downloadBtn: {
     minHeight: 40,
     paddingHorizontal: 20,
-    backgroundColor: themeTokens.colors.surfaceHigh,
+    backgroundColor: themeTokens.colors.accentPrimary,
     borderRadius: themeTokens.radius.sm,
     alignItems: "center",
     justifyContent: "center",
   },
   downloadBtnPressed: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
   downloadBtnLabel: {
-    color: themeTokens.colors.textPrimary,
+    color: themeTokens.colors.backgroundDeep,
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.6,
