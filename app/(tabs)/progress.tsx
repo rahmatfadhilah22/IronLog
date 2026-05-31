@@ -36,14 +36,14 @@ function WeightBars({
   unit: string;
 }) {
   const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
+  const CHART_H = 100;
+  const MIN_H = 8;
 
   return (
     <View style={styles.chartWrap}>
       <View style={styles.barsContainer}>
         {data.map((value, i) => {
-          const height = ((value - min) / range) * 80 + 16;
+          const height = Math.max((value / max) * CHART_H, MIN_H);
           return (
             <View key={i} style={styles.barColumn}>
               <Text style={styles.barValue}>
